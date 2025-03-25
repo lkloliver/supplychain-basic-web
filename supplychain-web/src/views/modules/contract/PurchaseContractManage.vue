@@ -1,451 +1,162 @@
 <template>
-    <div class="module-page">
-      <div class="module-header">
-        <div class="header-left">
-          <router-link :to="{ name: 'DashboardHome' }" class="back-btn">
-            <ArrowLeftIcon class="back-icon" />
-            <span>返回</span>
-          </router-link>
-          <h2 class="module-title">采购合同</h2>
-        </div>
-        <ModuleViewToggle 
-          :uploadRoute="'/dashboard/contract/purchase/upload'" 
-          :manageRoute="'/dashboard/contract/purchase/manage'" 
-        />
-      </div>
-      
-      <div class="module-content">
-        <div class="manage-section">
-          <div class="section-header">
-            <h3 class="section-title">管理采购合同</h3>
-          </div>
-          
-          <div class="search-filters">
-            <div class="filter-group">
-              <input type="text" v-model="searchQuery" placeholder="搜索合同编号或供应商" class="search-input">
-              <button class="search-btn" @click="searchContracts">搜索</button>
-            </div>
-            
-            <div class="filter-group">
-              <label>日期范围：</label>
-              <input type="date" v-model="startDate" class="date-input">
-              <span>至</span>
-              <input type="date" v-model="endDate" class="date-input">
-            </div>
-            
-            <div class="filter-group">
-              <label>状态：</label>
-              <select v-model="statusFilter" class="status-select">
-                <option value="">全部</option>
-                <option value="active">有效</option>
-                <option value="expired">已过期</option>
-                <option value="completed">已完成</option>
-              </select>
-            </div>
-            
-            <button class="reset-filters-btn" @click="resetFilters">重置筛选</button>
-          </div>
-          
-          <div class="data-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>合同编号</th>
-                  <th>签订日期</th>
-                  <th>供应商</th>
-                  <th>产品</th>
-                  <th>数量</th>
-                  <th>单价</th>
-                  <th>总金额</th>
-                  <th>状态</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(contract, index) in contracts" :key="index">
-                  <td>{{ contract.number }}</td>
-                  <td>{{ contract.date }}</td>
-                  <td>{{ contract.supplier }}</td>
-                  <td>{{ contract.product }}</td>
-                  <td>{{ contract.quantity }}</td>
-                  <td>¥{{ contract.unitPrice.toFixed(2) }}</td>
-                  <td>¥{{ contract.totalAmount.toFixed(2) }}</td>
-                  <td>
-                    <span class="status-badge" :class="contract.status">
-                      {{ getStatusText(contract.status) }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="view-btn" @click="viewContract(contract)">查看</button>
-                      <button class="edit-btn" @click="editContract(contract)">编辑</button>
-                      <button class="delete-btn" @click="deleteContract(contract)">删除</button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="contracts.length === 0">
-                  <td colspan="9" class="no-data">暂无数据</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div class="pagination">
-            <button class="page-btn" :disabled="currentPage === 1" @click="currentPage--">上一页</button>
-            <span class="page-info">第 {{ currentPage }} 页，共 {{ totalPages }} 页</span>
-            <button class="page-btn" :disabled="currentPage === totalPages" @click="currentPage++">下一页</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
-  
-  <script lang="ts" setup>
-  import { ref } from 'vue';
-  import { ArrowLeftIcon } from 'lucide-vue-next';
-  import ModuleViewToggle from '@/components/ModuleViewToggle.vue';
-  
-  // 搜索查询
-  const searchQuery = ref('');
-  const startDate = ref('');
-  const endDate = ref('');
-  const statusFilter = ref('');
-  
-  // 分页
-  const currentPage = ref(1);
-  const totalPages = ref(5);
-  
-  // 模拟数据
-  const contracts = ref([
-    {
-      number: 'PC-2023001',
-      date: '2023-01-15',
-      supplier: '北京农产品有限公司',
-      product: '小麦',
-      quantity: 1000,
-      unitPrice: 2.5,
-      totalAmount: 2500,
-      status: 'active'
-    },
-    {
-      number: 'PC-2023002',
-      date: '2023-02-20',
-      supplier: '河南粮食集团',
-      product: '玉米',
-      quantity: 1500,
-      unitPrice: 1.8,
-      totalAmount: 2700,
-      status: 'active'
-    },
-    {
-      number: 'PC-2023003',
-      date: '2023-03-10',
-      supplier: '山东农业发展有限公司',
-      product: '大豆',
-      quantity: 800,
-      unitPrice: 4.2,
-      totalAmount: 3360,
-      status: 'completed'
-    },
-    {
-      number: 'PC-2023004',
-      date: '2023-04-05',
-      supplier: '黑龙江农垦集团',
-      product: '水稻',
-      quantity: 1200,
-      unitPrice: 3.0,
-      totalAmount: 3600,
-      status: 'expired'
-    },
-    {
-      number: 'PC-2023005',
-      date: '2023-05-18',
-      supplier: '安徽粮油贸易有限公司',
-      product: '小麦',
-      quantity: 2000,
-      unitPrice: 2.6,
-      totalAmount: 5200,
-      status: 'active'
+  <DocumentManageTemplate
+    title="采购合同管理"
+    backRouteName="DashboardHome"
+    uploadRouteName="/dashboard/contract/purchase/upload"
+    manageRouteName="/dashboard/contract/purchase/manage"
+    :documents="contracts"
+    titleField="name"
+    uploadTimeField="uploadTime"
+    :columns="columns"
+    :documentIcon="FileTextIcon"
+    searchPlaceholder="搜索合同名称、编号或供应商..."
+    emptyText="暂无采购合同，请先上传"
+    :showCheckbox="true"
+    :showPagination="true"
+    :currentPage="currentPage"
+    :totalPages="totalPages"
+    @search="handleSearch"
+    @filter="handleFilter"
+    @sort="handleSort"
+    @export="handleExport"
+    @view="handleView"
+    @edit="handleEdit"
+    @delete="handleDelete"
+    @select="handleSelect"
+    @select-all="handleSelectAll"
+    @page-change="handlePageChange"
+  />
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { FileTextIcon } from 'lucide-vue-next';
+import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
+
+const router = useRouter();
+
+// 表格列配置
+const columns = [
+  { key: 'details.contractNo', label: '合同编号' },
+  { key: 'details.supplier', label: '供应商' },
+  { key: 'details.amount', label: '合同金额' },
+  { key: 'details.signDate', label: '签订日期' },
+  { key: 'details.status', label: '状态' }
+];
+
+// 模拟数据
+const contracts = ref([
+  {
+    id: 1,
+    name: '2023年度煤炭采购合同',
+    uploadTime: '2023-01-15 14:30',
+    details: {
+      contractNo: 'PC-2023-001',
+      supplier: '山西煤炭集团',
+      amount: '¥1,500,000',
+      signDate: '2023-01-10',
+      status: '已生效'
     }
-  ]);
-  
-  // 获取状态文本
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return '有效';
-      case 'expired': return '已过期';
-      case 'completed': return '已完成';
-      default: return '未知';
+  },
+  {
+    id: 2,
+    name: '铁矿石季度采购合同',
+    uploadTime: '2023-02-20 09:15',
+    details: {
+      contractNo: 'PC-2023-002',
+      supplier: '鞍钢集团',
+      amount: '¥2,300,000',
+      signDate: '2023-02-15',
+      status: '执行中'
     }
-  };
-  
-  // 搜索合同
-  const searchContracts = () => {
-    // 实际应用中这里会调用API进行搜索
-    console.log('搜索条件:', {
-      query: searchQuery.value,
-      startDate: startDate.value,
-      endDate: endDate.value,
-      status: statusFilter.value
-    });
-  };
-  
-  // 重置筛选条件
-  const resetFilters = () => {
-    searchQuery.value = '';
-    startDate.value = '';
-    endDate.value = '';
-    statusFilter.value = '';
-  };
-  
-  // 查看合同详情
-  const viewContract = (contract: any) => {
-    console.log('查看合同:', contract);
-  };
-  
-  // 编辑合同
-  const editContract = (contract: any) => {
-    console.log('编辑合同:', contract);
-  };
-  
-  // 删除合同
-  const deleteContract = (contract: any) => {
-    if (confirm(`确定要删除合同 ${contract.number} 吗？`)) {
-      console.log('删除合同:', contract);
+  },
+  {
+    id: 3,
+    name: '物流运输服务合同',
+    uploadTime: '2023-03-05 16:45',
+    details: {
+      contractNo: 'PC-2023-003',
+      supplier: '中铁物流',
+      amount: '¥800,000',
+      signDate: '2023-03-01',
+      status: '待审批'
     }
-  };
-  </script>
-  
-  <style scoped>
-  .module-page {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 1.5rem;
   }
-  
-  .module-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 1rem;
+]);
+
+// 分页相关
+const currentPage = ref(1);
+const totalPages = ref(3);
+
+// 处理搜索
+const handleSearch = (query) => {
+  console.log('搜索:', query);
+  // 实际应用中这里会调用API进行搜索
+};
+
+// 处理筛选
+const handleFilter = () => {
+  console.log('打开筛选面板');
+  // 实际应用中这里会打开筛选面板
+};
+
+// 处理排序
+const handleSort = () => {
+  console.log('打开排序面板');
+  // 实际应用中这里会打开排序面板
+};
+
+// 处理导出
+const handleExport = () => {
+  console.log('导出数据');
+  // 实际应用中这里会导出数据
+};
+
+// 处理查看
+const handleView = (contract) => {
+  console.log('查看合同:', contract);
+  // 实际应用中这里会跳转到详情页或打开详情弹窗
+};
+
+// 处理编辑
+const handleEdit = (contract) => {
+  console.log('编辑合同:', contract);
+  // 实际应用中这里会跳转到编辑页面
+};
+
+// 处理删除
+const handleDelete = (contract) => {
+  console.log('删除合同:', contract);
+  if (confirm(`确定要删除"${contract.name}"吗？`)) {
+    // 实际应用中这里会调用API删除数据
+    contracts.value = contracts.value.filter(item => item.id !== contract.id);
   }
-  
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background-color: #f5f7fa;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    color: #424242;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    text-decoration: none;
-  }
-  
-  .back-btn:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .back-icon {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .module-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-    color: #0a2463;
-  }
-  
-  .module-content {
-    min-height: 400px;
-  }
-  
-  .section-header {
-    margin-bottom: 1.5rem;
-  }
-  
-  .section-title {
-    font-size: 1.25rem;
-    font-weight: 500;
-    color: #333;
-    margin: 0;
-    padding-left: 0.5rem;
-    border-left: 3px solid #1e88e5;
-  }
-  
-  .manage-section {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-  
-  .search-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 1rem;
-    background-color: #f5f7fa;
-    border-radius: 8px;
-  }
-  
-  .filter-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .search-input {
-    width: 250px;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .date-input {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .status-select {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .search-btn, .reset-filters-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.875rem;
-  }
-  
-  .search-btn {
-    background-color: #1e88e5;
-    color: white;
-  }
-  
-  .reset-filters-btn {
-    background-color: #f5f5f5;
-    color: #424242;
-  }
-  
-  .data-table {
-    overflow-x: auto;
-  }
-  
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  th, td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-  }
-  
-  th {
-    background-color: #f5f7fa;
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-  }
-  
-  .status-badge.active {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-  }
-  
-  .status-badge.expired {
-    background-color: #ffebee;
-    color: #c62828;
-  }
-  
-  .status-badge.completed {
-    background-color: #e3f2fd;
-    color: #1565c0;
-  }
-  
-  .action-buttons {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  .view-btn, .edit-btn, .delete-btn {
-    padding: 0.25rem 0.5rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.75rem;
-  }
-  
-  .view-btn {
-    background-color: #e3f2fd;
-    color: #1565c0;
-  }
-  
-  .edit-btn {
-    background-color: #fff8e1;
-    color: #f57f17;
-  }
-  
-  .delete-btn {
-    background-color: #ffebee;
-    color: #c62828;
-  }
-  
-  .no-data {
-    text-align: center;
-    color: #757575;
-    padding: 2rem;
-  }
-  
-  .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  
-  .page-btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
-    background-color: white;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .page-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .page-info {
-    color: #666;
-  }
-  </style>
-  
-  
+};
+
+// 处理选择
+const handleSelect = (selectedItems) => {
+  console.log('选中的合同:', selectedItems);
+  // 实际应用中这里会更新选中状态
+};
+
+// 处理全选
+const handleSelectAll = (selectedItems) => {
+  console.log('全选/取消全选:', selectedItems);
+  // 实际应用中这里会更新全选状态
+};
+
+// 处理页码变化
+const handlePageChange = (page) => {
+  console.log('切换到页码:', page);
+  currentPage.value = page;
+  // 实际应用中这里会加载对应页的数据
+};
+
+// 组件挂载时加载数据
+onMounted(() => {
+  // 实际应用中这里会从API加载数据
+  console.log('组件已挂载，加载数据');
+});
+</script>
+
