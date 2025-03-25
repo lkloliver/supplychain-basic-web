@@ -4,6 +4,7 @@
     backRouteName="DashboardHome"
     uploadRouteName="/dashboard/contract/sales/upload"
     manageRouteName="/dashboard/contract/sales/manage"
+    :documents="contracts"
     :tableColumns="tableColumns"
     :tableData="contracts"
     :totalPages="totalPages"

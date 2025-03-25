@@ -1,336 +1,219 @@
 <template>
-    <div class="operation-page">
-      <div class="operation-header">
-        <router-link :to="{ name: 'FactoryWeight' }" class="back-btn">
-          <ArrowLeftIcon class="back-icon" />
-          <span>返回</span>
-        </router-link>
-        <h2 class="operation-title">到货厂家过磅单</h2>
-      </div>
-      
-      <div class="operation-tabs">
-        <router-link 
-          :to="{ name: 'FactoryWeightUpload' }" 
-          custom
-          v-slot="{ navigate, isActive }"
-        >
-          <div 
-            class="operation-tab" 
-            :class="{ active: isActive }"
-            @click="navigate"
-          >
-            资料上传
-          </div>
-        </router-link>
-        <router-link 
-          :to="{ name: 'FactoryWeightManage' }" 
-          custom
-          v-slot="{ isActive }"
-        >
-          <div class="operation-tab active">
-            资料管理
-          </div>
-        </router-link>
-      </div>
-      
-      <div class="operation-content">
-        <div class="manage-content">
-          <div class="search-bar">
-            <input type="text" v-model="searchQuery" placeholder="搜索资料..." />
-            <SearchIcon class="search-icon" />
-          </div>
-          
-          <div class="document-list">
-            <div v-if="documents.length === 0" class="empty-state">
-              暂无资料，请先上传
-            </div>
-            <div v-else v-for="(doc, index) in filteredDocuments" :key="index" class="document-item">
-              <div class="doc-info">
-                <FileTextIcon class="doc-icon" />
-                <div class="doc-details">
-                  <div class="doc-name">{{ doc.name }}</div>
-                  <div class="doc-meta">上传时间: {{ doc.uploadTime }}</div>
-                </div>
-              </div>
-              <div class="doc-actions">
-                <button class="action-btn view-btn" @click="viewDocument(doc)">
-                  <EyeIcon class="action-icon" />
-                </button>
-                <button class="action-btn edit-btn" @click="editDocument(doc)">
-                  <EditIcon class="action-icon" />
-                </button>
-                <button class="action-btn delete-btn" @click="deleteDocument(doc)">
-                  <TrashIcon class="action-icon" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
-  
-  <script lang="ts" setup>
-  import { ref, computed } from 'vue';
-  import { 
-    ArrowLeftIcon, 
-    SearchIcon, 
-    FileTextIcon, 
-    EyeIcon, 
-    EditIcon, 
-    TrashIcon 
-  } from 'lucide-vue-next';
-  
-  // 搜索查询
-  const searchQuery = ref('');
-  
-  // 模拟文档数据
-  const documents = ref([
-    {
-      id: 1,
-      name: '2023年1月到货厂家过磅单',
-      type: 'factory-weight',
-      uploadTime: '2023-01-15 14:30',
-      details: {
-        weightNo: 'FW-2023-001',
-        factory: '厂家A',
-        grossWeight: '45000',
-        tareWeight: '5000',
-        netWeight: '40000',
-        weightDate: '2023-01-15'
-      }
-    },
-    {
-      id: 2,
-      name: '2023年2月到货厂家过磅单',
-      type: 'factory-weight',
-      uploadTime: '2023-02-10 09:45',
-      details: {
-        weightNo: 'FW-2023-002',
-        factory: '厂家B',
-        grossWeight: '38000',
-        tareWeight: '4500',
-        netWeight: '33500',
-        weightDate: '2023-02-10'
-      }
-    }
-  ]);
-  
-  // 过滤后的文档
-  const filteredDocuments = computed(() => {
-    if (!searchQuery.value) return documents.value;
-    return documents.value.filter(doc => 
-      doc.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
+  <DocumentManageTemplate
+    title="到货厂家过磅管理"
+    backRouteName="DashboardHome"
+    uploadRouteName="/dashboard/goods/non-base/factory-weight/upload"
+    manageRouteName="/dashboard/goods/non-base/factory-weight/manage"
+    :columns="columns"
+    :documents="documents"
+    :currentPage="currentPage"
+    :totalPages="totalPages"
+    :searchQuery="searchQuery"
+    :startDate="startDate"
+    :endDate="endDate"
+    :statusFilter="statusFilter"
+    @search="searchWeights"
+    @reset="resetFilters"
+    @view="viewWeight"
+    @edit="editWeight"
+    @delete="deleteWeight"
+    @page-change="handlePageChange"
+  />
+</template>
+
+<script lang="ts" setup>
+import { ref } from 'vue';
+import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
+
+// 搜索查询
+const searchQuery = ref('');
+const startDate = ref('');
+const endDate = ref('');
+const statusFilter = ref('');
+
+// 分页
+const currentPage = ref(1);
+const totalPages = ref(5);
+
+// 定义表格列
+const columns = [
+  {
+    key: 'weightNo',
+    label: '过磅单号'
+  },
+  {
+    key: 'contractNo',
+    label: '合同编号'
+  },
+  {
+    key: 'waybillNo',
+    label: '运单编号'
+  },
+  {
+    key: 'vehicleNo',
+    label: '车牌号'
+  },
+  {
+    key: 'factory',
+    label: '厂家名称'
+  },
+  {
+    key: 'grossWeight',
+    label: '毛重(kg)',
+    format: (value: number) => `${value.toLocaleString()}`
+  },
+  {
+    key: 'tareWeight',
+    label: '皮重(kg)',
+    format: (value: number) => `${value.toLocaleString()}`
+  },
+  {
+    key: 'netWeight',
+    label: '净重(kg)',
+    format: (value: number) => `${value.toLocaleString()}`
+  },
+  {
+    key: 'weightTime',
+    label: '过磅时间'
+  },
+  {
+    key: 'weightType',
+    label: '过磅类型',
+    format: (value: string) => getWeightTypeText(value)
+  },
+  {
+    key: 'status',
+    label: '状态',
+    format: (value: string) => getStatusText(value),
+    class: (value: string) => `status-badge ${value}`
+  }
+];
+
+// 模拟数据
+const documents = ref([
+  {
+    id: 1,
+    name: '2023年1月厂家过磅单',
+    type: 'factory-weight',
+    uploadTime: '2023-01-20 14:30',
+    weightNo: 'FW-2023001',
+    contractNo: 'SC-2023001',
+    waybillNo: 'SW-2023001',
+    vehicleNo: '京A12345',
+    factory: '北京钢铁厂',
+    grossWeight: 35000,
+    tareWeight: 5000,
+    netWeight: 30000,
+    weightTime: '2023-01-15 10:30',
+    operator: '张三',
+    weightType: 'first',
+    status: 'active'
+  },
+  {
+    id: 2,
+    name: '2023年2月厂家过磅单',
+    type: 'factory-weight',
+    uploadTime: '2023-02-15 10:45',
+    weightNo: 'FW-2023002',
+    contractNo: 'SC-2023002',
+    waybillNo: 'SW-2023002',
+    vehicleNo: '京B12345',
+    factory: '天津钢铁厂',
+    grossWeight: 40000,
+    tareWeight: 6000,
+    netWeight: 34000,
+    weightTime: '2023-02-15 09:30',
+    operator: '李四',
+    weightType: 'second',
+    status: 'active'
+  }
+]);
+
+// 获取过磅类型文本
+const getWeightTypeText = (type: string): string => {
+  switch (type) {
+    case 'first': return '第一次过磅';
+    case 'second': return '第二次过磅';
+    case 'once': return '一次过磅';
+    default: return '未知';
+  }
+};
+
+// 获取状态文本
+const getStatusText = (status: string): string => {
+  switch (status) {
+    case 'active': return '有效';
+    case 'expired': return '已过期';
+    case 'completed': return '已完成';
+    default: return '未知';
+  }
+};
+
+// 搜索过磅单
+const searchWeights = () => {
+  console.log('搜索条件:', {
+    query: searchQuery.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
+    status: statusFilter.value
   });
-  
-  // 查看文档
-  const viewDocument = (doc: any) => {
-    console.log('查看文档', doc);
-    // 这里可以打开文档预览
-  };
-  
-  // 编辑文档
-  const editDocument = (doc: any) => {
-    console.log('编辑文档', doc);
-    // 这里可以打开编辑界面
-  };
-  
-  // 删除文档
-  const deleteDocument = (doc: any) => {
-    if (confirm('确定要删除该文档吗？')) {
-      console.log('删除文档', doc);
-      // 这里可以调用API删除文档
-      documents.value = documents.value.filter(item => item.id !== doc.id);
-    }
-  };
-  </script>
-  
-  <style scoped>
-  .operation-page {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 1.5rem;
+};
+
+// 重置筛选条件
+const resetFilters = () => {
+  searchQuery.value = '';
+  startDate.value = '';
+  endDate.value = '';
+  statusFilter.value = '';
+};
+
+// 查看过磅单详情
+const viewWeight = (weight: any) => {
+  console.log('查看过磅单:', weight);
+};
+
+// 编辑过磅单
+const editWeight = (weight: any) => {
+  console.log('编辑过磅单:', weight);
+};
+
+// 删除过磅单
+const deleteWeight = (weight: any) => {
+  if (confirm(`确定要删除过磅单 ${weight.weightNo} 吗？`)) {
+    console.log('删除过磅单:', weight);
   }
-  
-  .operation-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background-color: #f5f7fa;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    color: #424242;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-right: 1rem;
-    text-decoration: none;
-  }
-  
-  .back-btn:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .back-icon {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .operation-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-    color: #0a2463;
-  }
-  
-  .operation-tabs {
-    display: flex;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 1.5rem;
-  }
-  
-  .operation-tab {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #757575;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  
-  .operation-tab.active {
-    color: #1e88e5;
-    border-bottom: 2px solid #1e88e5;
-  }
-  
-  .operation-content {
-    min-height: 400px;
-  }
-  
-  /* 资料管理样式 */
-  .manage-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-  
-  .search-bar {
-    position: relative;
-  }
-  
-  .search-bar input {
-    width: 100%;
-    padding: 0.625rem 2.5rem 0.625rem 0.625rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 0.875rem;
-  }
-  
-  .search-icon {
-    position: absolute;
-    right: 0.625rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    color: #757575;
-  }
-  
-  .document-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .empty-state {
-    padding: 2rem;
-    text-align: center;
-    color: #757575;
-  }
-  
-  .document-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: #f5f7fa;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-  }
-  
-  .document-item:hover {
-    background-color: #e3f2fd;
-  }
-  
-  .doc-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  
-  .doc-icon {
-    width: 24px;
-    height: 24px;
-    color: #1e88e5;
-  }
-  
-  .doc-name {
-    font-weight: 500;
-    color: #424242;
-  }
-  
-  .doc-meta {
-    font-size: 0.75rem;
-    color: #757575;
-  }
-  
-  .doc-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  .action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: 4px;
-    background-color: transparent;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .action-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-  
-  .action-icon {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .view-btn .action-icon {
-    color: #1e88e5;
-  }
-  
-  .edit-btn .action-icon {
-    color: #ffa000;
-  }
-  
-  .delete-btn .action-icon {
-    color: #e53935;
-  }
-  </style>
+};
+
+// 处理页面变化
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  console.log('切换到页面:', page);
+};
+</script>
+
+<style scoped>
+/* 状态标签样式 */
+:deep(.status-badge) {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+:deep(.status-badge.active) {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:deep(.status-badge.expired) {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+:deep(.status-badge.completed) {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+</style>
   
   

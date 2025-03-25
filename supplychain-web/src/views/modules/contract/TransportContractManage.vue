@@ -5,7 +5,7 @@
     uploadRouteName="/dashboard/contract/transport/upload"
     manageRouteName="/dashboard/contract/transport/manage"
     :columns="columns"
-    :documents="contracts"
+    :documents="documents"
     :currentPage="currentPage"
     :totalPages="totalPages"
     :searchQuery="searchQuery"
@@ -76,8 +76,12 @@ const columns = [
 ];
 
 // 模拟数据
-const contracts = ref([
+const documents = ref([
   {
+    id: 1,
+    name: '2023年1月运输合同',
+    type: 'transport-contract',
+    uploadTime: '2023-01-20 14:30',
     number: 'TC-2023001',
     date: '2023-01-15',
     transporter: '北京物流有限公司',
@@ -88,6 +92,10 @@ const contracts = ref([
     status: 'active'
   },
   {
+    id: 2,
+    name: '2023年2月运输合同',
+    type: 'transport-contract',
+    uploadTime: '2023-02-15 10:45',
     number: 'TC-2023002',
     date: '2023-02-20',
     transporter: '河南运输集团',
@@ -98,6 +106,10 @@ const contracts = ref([
     status: 'active'
   },
   {
+    id: 3,
+    name: '2023年3月运输合同',
+    type: 'transport-contract',
+    uploadTime: '2023-03-10 09:30',
     number: 'TC-2023003',
     date: '2023-03-10',
     transporter: '山东物流发展有限公司',
@@ -106,31 +118,11 @@ const contracts = ref([
     unitPrice: 4.2,
     totalAmount: 3360,
     status: 'completed'
-  },
-  {
-    number: 'TC-2023004',
-    date: '2023-04-05',
-    transporter: '黑龙江运输集团',
-    route: '哈尔滨-北京',
-    quantity: 1200,
-    unitPrice: 3.0,
-    totalAmount: 3600,
-    status: 'expired'
-  },
-  {
-    number: 'TC-2023005',
-    date: '2023-05-18',
-    transporter: '安徽物流贸易有限公司',
-    route: '合肥-南京',
-    quantity: 2000,
-    unitPrice: 2.6,
-    totalAmount: 5200,
-    status: 'active'
   }
 ]);
 
 // 获取状态文本
-const getStatusText = (status: string) => {
+const getStatusText = (status: string): string => {
   switch (status) {
     case 'active': return '有效';
     case 'expired': return '已过期';

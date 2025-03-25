@@ -532,6 +532,30 @@ const routes = [
           },
         ],
       },
+      // 个人中心
+      {
+        path: "user-center",
+        name: "UserCenter",
+        component: () => import("@/views/user/UserCenter.vue"),
+        redirect: { name: "BlockchainAccount" },
+        children: [
+          {
+            path: "blockchain-account",
+            name: "BlockchainAccount",
+            component: () => import("@/views/user/BlockchainAccount.vue"),
+          },
+          {
+            path: "role-permission",
+            name: "UserRolePermission",
+            component: () => import("@/views/user/UserRolePermission.vue"),
+          },
+          {
+            path: "authentication",
+            name: "AuthenticationCenter",
+            component: () => import("@/views/user/AuthenticationCenter.vue"),
+          },
+        ],
+      },
     ],
   },
 ]

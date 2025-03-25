@@ -1,107 +1,202 @@
 <template>
-    <div class="module-page">
-      <div class="module-header">
-        <h2 class="module-title">入库过磅单</h2>
-        <div class="module-actions">
-          <router-link :to="{ name: 'InboundWeightUpload' }" class="action-btn upload-btn">
-            <UploadCloudIcon class="btn-icon" />
-            <span>上传资料</span>
-          </router-link>
-          <router-link :to="{ name: 'InboundWeightManage' }" class="action-btn manage-btn">
-            <ListIcon class="btn-icon" />
-            <span>管理资料</span>
-          </router-link>
-        </div>
-      </div>
-      
-      <div class="module-content">
-        <div class="module-description">
-          <p>您当前正在查看 <strong>入库过磅单</strong> 模块。</p>
-          <p>请使用上方的按钮上传或管理资料。</p>
-        </div>
-      </div>
-    </div>
-  </template>
-  
-  <script lang="ts" setup>
-  import { UploadCloudIcon, ListIcon } from 'lucide-vue-next';
-  </script>
-  
-  <style scoped>
-  .module-page {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 1.5rem;
+  <DocumentManageTemplate
+    title="入库过磅管理"
+    backRouteName="DashboardHome"
+    uploadRouteName="/dashboard/goods/base/inbound-weight/upload"
+    manageRouteName="/dashboard/goods/base/inbound-weight/manage"
+    :columns="columns"
+    :documents="documents"
+    :currentPage="currentPage"
+    :totalPages="totalPages"
+    :searchQuery="searchQuery"
+    :startDate="startDate"
+    :endDate="endDate"
+    :statusFilter="statusFilter"
+    @search="searchWeights"
+    @reset="resetFilters"
+    @view="viewWeight"
+    @edit="editWeight"
+    @delete="deleteWeight"
+    @page-change="handlePageChange"
+  />
+</template>
+
+<script lang="ts" setup>
+import { ref } from 'vue';
+import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
+
+// 搜索查询
+const searchQuery = ref('');
+const startDate = ref('');
+const endDate = ref('');
+const statusFilter = ref('');
+
+// 分页
+const currentPage = ref(1);
+const totalPages = ref(5);
+
+// 定义表格列
+const columns = [
+  {
+    key: 'weightNo',
+    label: '过磅单号'
+  },
+  {
+    key: 'vehicleNo',
+    label: '车牌号'
+  },
+  {
+    key: 'grossWeight',
+    label: '毛重(kg)',
+    format: (value: number) => `${value.toLocaleString()}`
+  },
+  {
+    key: 'tareWeight',
+    label: '皮重(kg)',
+    format: (value: number) => `${value.toLocaleString()}`
+  },
+  {
+    key: 'netWeight',
+    label: '净重(kg)',
+    format: (value: number) => `${value.toLocaleString()}`
+  },
+  {
+    key: 'weightTime',
+    label: '过磅时间'
+  },
+  {
+    key: 'operator',
+    label: '操作员'
+  },
+  {
+    key: 'status',
+    label: '状态',
+    format: (value: string) => getStatusText(value),
+    class: (value: string) => `status-badge ${value}`
   }
-  
-  .module-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
+];
+
+// 模拟数据
+const documents = ref([
+  {
+    id: 1,
+    name: '2023年1月入库过磅单',
+    type: 'inbound-weight',
+    uploadTime: '2023-01-20 14:30',
+    weightNo: 'W-2023001',
+    vehicleNo: '京A12345',
+    grossWeight: 35000,
+    tareWeight: 5000,
+    netWeight: 30000,
+    weightTime: '2023-01-15 10:30',
+    operator: '张三',
+    status: 'active'
+  },
+  {
+    id: 2,
+    name: '2023年2月入库过磅单',
+    type: 'inbound-weight',
+    uploadTime: '2023-02-15 10:45',
+    weightNo: 'W-2023002',
+    vehicleNo: '京B12345',
+    grossWeight: 40000,
+    tareWeight: 6000,
+    netWeight: 34000,
+    weightTime: '2023-02-15 09:30',
+    operator: '李四',
+    status: 'active'
+  },
+  {
+    id: 3,
+    name: '2023年3月入库过磅单',
+    type: 'inbound-weight',
+    uploadTime: '2023-03-10 09:30',
+    weightNo: 'W-2023003',
+    vehicleNo: '京C12345',
+    grossWeight: 38000,
+    tareWeight: 5500,
+    netWeight: 32500,
+    weightTime: '2023-03-10 08:30',
+    operator: '王五',
+    status: 'completed'
   }
-  
-  .module-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-    color: #0a2463;
+]);
+
+// 获取状态文本
+const getStatusText = (status: string): string => {
+  switch (status) {
+    case 'active': return '有效';
+    case 'expired': return '已过期';
+    case 'completed': return '已完成';
+    default: return '未知';
   }
-  
-  .module-actions {
-    display: flex;
-    gap: 1rem;
+};
+
+// 搜索过磅单
+const searchWeights = () => {
+  console.log('搜索条件:', {
+    query: searchQuery.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
+    status: statusFilter.value
+  });
+};
+
+// 重置筛选条件
+const resetFilters = () => {
+  searchQuery.value = '';
+  startDate.value = '';
+  endDate.value = '';
+  statusFilter.value = '';
+};
+
+// 查看过磅单详情
+const viewWeight = (weight: any) => {
+  console.log('查看过磅单:', weight);
+};
+
+// 编辑过磅单
+const editWeight = (weight: any) => {
+  console.log('编辑过磅单:', weight);
+};
+
+// 删除过磅单
+const deleteWeight = (weight: any) => {
+  if (confirm(`确定要删除过磅单 ${weight.weightNo} 吗？`)) {
+    console.log('删除过磅单:', weight);
   }
-  
-  .action-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1rem;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    text-decoration: none;
-  }
-  
-  .upload-btn {
-    background-color: #1e88e5;
-    color: white;
-  }
-  
-  .upload-btn:hover {
-    background-color: #1976d2;
-  }
-  
-  .manage-btn {
-    background-color: #f5f5f5;
-    color: #424242;
-  }
-  
-  .manage-btn:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .btn-icon {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .module-content {
-    min-height: 300px;
-  }
-  
-  .module-description {
-    padding: 2rem;
-    text-align: center;
-    color: #757575;
-    background-color: #f5f7fa;
-    border-radius: 8px;
-  }
-  </style>
+};
+
+// 处理页面变化
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  console.log('切换到页面:', page);
+};
+</script>
+
+<style scoped>
+/* 状态标签样式 */
+:deep(.status-badge) {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+:deep(.status-badge.active) {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:deep(.status-badge.expired) {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+:deep(.status-badge.completed) {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+</style>
   
   

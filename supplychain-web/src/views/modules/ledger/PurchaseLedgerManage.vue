@@ -1,342 +1,231 @@
 <template>
-    <div class="operation-page">
-      <div class="operation-header">
-        <router-link :to="{ name: 'PurchaseLedger' }" class="back-btn">
-          <ArrowLeftIcon class="back-icon" />
-          <span>返回</span>
-        </router-link>
-        <h2 class="operation-title">采购台账</h2>
-      </div>
-      
-      <div class="operation-tabs">
-        <router-link 
-          :to="{ name: 'PurchaseLedgerUpload' }" 
-          custom
-          v-slot="{ navigate, isActive }"
-        >
-          <div 
-            class="operation-tab" 
-            :class="{ active: isActive }"
-            @click="navigate"
-          >
-            资料上传
-          </div>
-        </router-link>
-        <router-link 
-          :to="{ name: 'PurchaseLedgerManage' }" 
-          custom
-          v-slot="{ isActive }"
-        >
-          <div class="operation-tab active">
-            资料管理
-          </div>
-        </router-link>
-      </div>
-      
-      <div class="operation-content">
-        <div class="manage-content">
-          <div class="search-bar">
-            <input type="text" v-model="searchQuery" placeholder="搜索资料..." />
-            <SearchIcon class="search-icon" />
-          </div>
-          
-          <div class="document-list">
-            <div v-if="documents.length === 0" class="empty-state">
-              暂无资料，请先上传
-            </div>
-            <div v-else v-for="(doc, index) in filteredDocuments" :key="index" class="document-item">
-              <div class="doc-info">
-                <BookIcon class="doc-icon" />
-                <div class="doc-details">
-                  <div class="doc-name">{{ doc.name }}</div>
-                  <div class="doc-meta">上传时间: {{ doc.uploadTime }}</div>
-                </div>
-              </div>
-              <div class="doc-actions">
-                <button class="action-btn view-btn" @click="viewDocument(doc)">
-                  <EyeIcon class="action-icon" />
-                </button>
-                <button class="action-btn edit-btn" @click="editDocument(doc)">
-                  <EditIcon class="action-icon" />
-                </button>
-                <button class="action-btn delete-btn" @click="deleteDocument(doc)">
-                  <TrashIcon class="action-icon" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
-  
-  <script lang="ts" setup>
-  import { ref, computed } from 'vue';
-  import { 
-    ArrowLeftIcon, 
-    SearchIcon, 
-    BookIcon, 
-    EyeIcon, 
-    EditIcon, 
-    TrashIcon 
-  } from 'lucide-vue-next';
-  
-  // 搜索查询
-  const searchQuery = ref('');
-  
-  // 模拟文档数据
-  const documents = ref([
-    {
-      id: 1,
-      name: '2023年Q1采购台账',
-      type: 'purchase-ledger',
-      uploadTime: '2023-03-30 14:30',
-      details: {
-        ledgerNo: 'PL-2023-001',
-        supplier: '供应商A',
-        contractNo: 'PC-2023-001',
-        totalAmount: '950000',
-        paidAmount: '450000',
-        startDate: '2023-01-01',
-        endDate: '2023-03-31',
-        status: '已完成',
-        remark: 'Q1季度采购台账'
-      }
-    },
-    {
-      id: 2,
-      name: '2023年Q2采购台账',
-      type: 'purchase-ledger',
-      uploadTime: '2023-06-30 10:45',
-      details: {
-        ledgerNo: 'PL-2023-002',
-        supplier: '供应商B',
-        contractNo: 'PC-2023-002',
-        totalAmount: '1200000',
-        paidAmount: '600000',
-        startDate: '2023-04-01',
-        endDate: '2023-06-30',
-        status: '已完成',
-        remark: 'Q2季度采购台账'
-      }
-    }
-  ]);
-  
-  // 过滤后的文档
-  const filteredDocuments = computed(() => {
-    if (!searchQuery.value) return documents.value;
-    return documents.value.filter(doc => 
-      doc.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
+  <DocumentManageTemplate
+    title="采购台账管理"
+    :columns="columns"
+    backRouteName="DashboardHome"
+    uploadRouteName="/dashboard/ledger/purchase/upload"
+    manageRouteName="/dashboard/ledger/purchase/manage"
+    :documents="documents"
+    :currentPage="currentPage"
+    :totalPages="totalPages"
+    :searchQuery="searchQuery"
+    :startDate="startDate"
+    :endDate="endDate"
+    :statusFilter="statusFilter"
+    @search="searchLedgers"
+    @reset="resetFilters"
+    @view="viewLedger"
+    @edit="editLedger"
+    @delete="deleteLedger"
+    @page-change="handlePageChange"
+  />
+</template>
+
+<script lang="ts" setup>
+import { ref } from 'vue';
+import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
+
+const searchQuery = ref('');
+const startDate = ref('');
+const endDate = ref('');
+const statusFilter = ref('');
+const currentPage = ref(1);
+const totalPages = ref(5);
+
+const columns = [
+  {
+    key: 'ledgerNo',
+    label: '台账编号'
+  },
+  {
+    key: 'contractNo',
+    label: '合同编号'
+  },
+  {
+    key: 'supplier',
+    label: '供应商名称'
+  },
+  {
+    key: 'businessDate',
+    label: '业务日期'
+  },
+  {
+    key: 'businessType',
+    label: '业务类型',
+    format: (value: string) => getBusinessTypeText(value)
+  },
+  {
+    key: 'goodsName',
+    label: '货物名称'
+  },
+  {
+    key: 'specification',
+    label: '规格型号'
+  },
+  {
+    key: 'quantity',
+    label: '数量',
+    format: (value: number) => value.toLocaleString()
+  },
+  {
+    key: 'unit',
+    label: '单位'
+  },
+  {
+    key: 'unitPrice',
+    label: '单价(元)',
+    format: (value: number) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  },
+  {
+    key: 'totalAmount',
+    label: '总金额(元)',
+    format: (value: number) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  },
+  {
+    key: 'paymentStatus',
+    label: '付款状态',
+    format: (value: string) => getPaymentStatusText(value),
+    class: (value: string) => `payment-status-badge ${value}`
+  },
+  {
+    key: 'deliveryStatus',
+    label: '交货状态',
+    format: (value: string) => getDeliveryStatusText(value),
+    class: (value: string) => `delivery-status-badge ${value}`
+  }
+];
+
+const documents = ref([
+  {
+    id: 1,
+    name: '2024年1月采购台账',
+    type: 'purchase-ledger',
+    uploadTime: '2024-01-20 14:30',
+    ledgerNo: 'PL-2024001',
+    contractNo: 'PC-2024001',
+    supplier: '示例供应商',
+    businessDate: '2024-01-15',
+    businessType: 'purchase',
+    goodsName: '钢材',
+    specification: 'Q235 20*2000*6000',
+    quantity: 500,
+    unit: '吨',
+    unitPrice: 3000,
+    totalAmount: 1500000,
+    taxRate: 13,
+    taxAmount: 195000,
+    paymentStatus: 'unpaid',
+    deliveryStatus: 'undelivered'
+  }
+]);
+
+const getBusinessTypeText = (type: string): string => {
+  switch (type) {
+    case 'purchase': return '采购入库';
+    case 'return': return '采购退货';
+    case 'adjustment': return '价格调整';
+    default: return '未知';
+  }
+};
+
+const getPaymentStatusText = (status: string): string => {
+  switch (status) {
+    case 'unpaid': return '未付款';
+    case 'partialPaid': return '部分付款';
+    case 'paid': return '已付款';
+    default: return '未知';
+  }
+};
+
+const getDeliveryStatusText = (status: string): string => {
+  switch (status) {
+    case 'undelivered': return '未交货';
+    case 'partialDelivered': return '部分交货';
+    case 'delivered': return '已交货';
+    default: return '未知';
+  }
+};
+
+const searchLedgers = () => {
+  console.log('搜索条件:', {
+    query: searchQuery.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
+    status: statusFilter.value
   });
-  
-  // 查看文档
-  const viewDocument = (doc: any) => {
-    console.log('查看文档', doc);
-    // 这里可以打开文档预览
-  };
-  
-  // 编辑文档
-  const editDocument = (doc: any) => {
-    console.log('编辑文档', doc);
-    // 这里可以打开编辑界面
-  };
-  
-  // 删除文档
-  const deleteDocument = (doc: any) => {
-    if (confirm('确定要删除该文档吗？')) {
-      console.log('删除文档', doc);
-      // 这里可以调用API删除文档
-      documents.value = documents.value.filter(item => item.id !== doc.id);
-    }
-  };
-  </script>
-  
-  <style scoped>
-  .operation-page {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 1.5rem;
+};
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  startDate.value = '';
+  endDate.value = '';
+  statusFilter.value = '';
+};
+
+const viewLedger = (ledger: any) => {
+  console.log('查看台账:', ledger);
+};
+
+const editLedger = (ledger: any) => {
+  console.log('编辑台账:', ledger);
+};
+
+const deleteLedger = (ledger: any) => {
+  if (confirm(`确定要删除台账 ${ledger.ledgerNo} 吗？`)) {
+    console.log('删除台账:', ledger);
   }
-  
-  .operation-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background-color: #f5f7fa;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    color: #424242;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-right: 1rem;
-    text-decoration: none;
-  }
-  
-  .back-btn:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .back-icon {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .operation-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-    color: #0a2463;
-  }
-  
-  .operation-tabs {
-    display: flex;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 1.5rem;
-  }
-  
-  .operation-tab {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #757575;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  
-  .operation-tab.active {
-    color: #1e88e5;
-    border-bottom: 2px solid #1e88e5;
-  }
-  
-  .operation-content {
-    min-height: 400px;
-  }
-  
-  /* 资料管理样式 */
-  .manage-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-  
-  .search-bar {
-    position: relative;
-  }
-  
-  .search-bar input {
-    width: 100%;
-    padding: 0.625rem 2.5rem 0.625rem 0.625rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 0.875rem;
-  }
-  
-  .search-icon {
-    position: absolute;
-    right: 0.625rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    color: #757575;
-  }
-  
-  .document-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .empty-state {
-    padding: 2rem;
-    text-align: center;
-    color: #757575;
-  }
-  
-  .document-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: #f5f7fa;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-  }
-  
-  .document-item:hover {
-    background-color: #e3f2fd;
-  }
-  
-  .doc-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  
-  .doc-icon {
-    width: 24px;
-    height: 24px;
-    color: #1e88e5;
-  }
-  
-  .doc-name {
-    font-weight: 500;
-    color: #424242;
-  }
-  
-  .doc-meta {
-    font-size: 0.75rem;
-    color: #757575;
-  }
-  
-  .doc-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  .action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: 4px;
-    background-color: transparent;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .action-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-  
-  .action-icon {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .view-btn .action-icon {
-    color: #1e88e5;
-  }
-  
-  .edit-btn .action-icon {
-    color: #ffa000;
-  }
-  
-  .delete-btn .action-icon {
-    color: #e53935;
-  }
-  </style>
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  console.log('切换到页面:', page);
+};
+</script>
+
+<style scoped>
+:deep(.payment-status-badge) {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+:deep(.payment-status-badge.unpaid) {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+:deep(.payment-status-badge.partialPaid) {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+:deep(.payment-status-badge.paid) {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:deep(.delivery-status-badge) {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+:deep(.delivery-status-badge.undelivered) {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+:deep(.delivery-status-badge.partialDelivered) {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+:deep(.delivery-status-badge.delivered) {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+</style>
   
   

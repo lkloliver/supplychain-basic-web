@@ -18,104 +18,89 @@ import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplat
 const router = useRouter();
 
 // 定义详情字段
-const detailFields = ref([
+const detailFields = [
   {
-    id: 'contractNo',
+    key: 'contractNo',
     label: '合同编号',
     type: 'text',
-    placeholder: '请输入合同编号',
-    value: ''
+    placeholder: '请输入合同编号'
   },
   {
-    id: 'transporter',
+    key: 'transporter',
     label: '运输商',
     type: 'text',
-    placeholder: '请输入运输商',
-    value: ''
+    placeholder: '请输入运输商'
   },
   {
-    id: 'route',
+    key: 'route',
     label: '运输路线',
     type: 'text',
-    placeholder: '请输入运输路线',
-    value: ''
+    placeholder: '请输入运输路线'
   },
   {
-    id: 'quantity',
+    key: 'quantity',
     label: '运输量',
     type: 'number',
-    placeholder: '请输入运输量',
-    value: ''
+    placeholder: '请输入运输量'
   },
   {
-    id: 'unitPrice',
+    key: 'unitPrice',
     label: '单价',
     type: 'number',
-    placeholder: '请输入单价',
-    value: ''
+    placeholder: '请输入单价'
   },
   {
-    id: 'amount',
+    key: 'amount',
     label: '合同金额',
     type: 'number',
-    placeholder: '请输入合同金额',
-    value: ''
+    placeholder: '请输入合同金额'
   },
   {
-    id: 'startDate',
+    key: 'startDate',
     label: '开始日期',
-    type: 'date',
-    value: ''
+    type: 'date'
   },
   {
-    id: 'endDate',
+    key: 'endDate',
     label: '结束日期',
-    type: 'date',
-    value: ''
+    type: 'date'
   }
-]);
+];
 
 // 处理AI识别
-const handleRecognize = (file: File) => {
+const handleRecognize = async (file) => {
+  // 模拟AI识别过程
   console.log('正在识别文档...', file.name);
   
-  // 模拟AI识别过程
-  setTimeout(() => {
-    // 更新字段值
-    detailFields.value = detailFields.value.map(field => {
-      if (field.id === 'contractNo') {
-        return { ...field, value: 'TC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0') };
-      } else if (field.id === 'transporter') {
-        return { ...field, value: '自动识别运输商' };
-      } else if (field.id === 'route') {
-        return { ...field, value: '北京-上海' };
-      } else if (field.id === 'quantity') {
-        return { ...field, value: Math.floor(Math.random() * 2000).toString() };
-      } else if (field.id === 'unitPrice') {
-        return { ...field, value: (Math.random() * 5 + 1).toFixed(2) };
-      } else if (field.id === 'amount') {
-        return { ...field, value: Math.floor(Math.random() * 500000).toString() };
-      } else if (field.id === 'startDate') {
-        return { ...field, value: new Date().toISOString().split('T')[0] };
-      } else if (field.id === 'endDate') {
-        return { ...field, value: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] };
-      }
-      return field;
-    });
-    
-    alert('文档识别完成');
-  }, 1500);
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // 模拟识别结果
+      const result = {
+        contractNo: 'TC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+        transporter: '自动识别运输商',
+        route: '自动识别路线',
+        quantity: Math.floor(Math.random() * 1000).toString(),
+        unitPrice: Math.floor(Math.random() * 100).toString(),
+        amount: Math.floor(Math.random() * 100000).toString(),
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+      
+      alert('文档识别完成');
+      resolve(result);
+    }, 1500);
+  });
 };
 
-// 处理表单提交
-const handleSubmit = (formData: { name: string, file: File, details: Record<string, any> }) => {
-  console.log('提交上传', formData);
+// 处理提交
+const handleSubmit = (formData) => {
+  console.log('提交运输合同数据', formData);
   
-  // 模拟上传成功
-  alert('上传成功');
-  
-  // 上传成功后跳转到管理页面
-  router.push({ name: 'TransportContractManage' });
+  // 模拟API调用
+  setTimeout(() => {
+    alert('运输合同上传成功');
+    router.push({ name: 'TransportContractManage' });
+  }, 1000);
 };
 </script>
 

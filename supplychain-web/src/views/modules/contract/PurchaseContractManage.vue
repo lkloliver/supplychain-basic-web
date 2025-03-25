@@ -5,158 +5,191 @@
     uploadRouteName="/dashboard/contract/purchase/upload"
     manageRouteName="/dashboard/contract/purchase/manage"
     :documents="contracts"
-    titleField="name"
-    uploadTimeField="uploadTime"
-    :columns="columns"
-    :documentIcon="FileTextIcon"
-    searchPlaceholder="搜索合同名称、编号或供应商..."
-    emptyText="暂无采购合同，请先上传"
-    :showCheckbox="true"
-    :showPagination="true"
+    titleField="contractNo"
+    titleColumnName="合同编号"
+    :cardMainColumns="cardMainColumns"
+    :detailGroups="detailGroups"
+    :customDetailComponents="customDetailComponents"
+    searchPlaceholder="搜索合同..."
     :currentPage="currentPage"
     :totalPages="totalPages"
     @search="handleSearch"
-    @filter="handleFilter"
-    @sort="handleSort"
-    @export="handleExport"
     @view="handleView"
     @edit="handleEdit"
     @delete="handleDelete"
-    @select="handleSelect"
-    @select-all="handleSelectAll"
     @page-change="handlePageChange"
   />
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { FileTextIcon } from 'lucide-vue-next';
 import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
-
-const router = useRouter();
-
-// 表格列配置
-const columns = [
-  { key: 'details.contractNo', label: '合同编号' },
-  { key: 'details.supplier', label: '供应商' },
-  { key: 'details.amount', label: '合同金额' },
-  { key: 'details.signDate', label: '签订日期' },
-  { key: 'details.status', label: '状态' }
-];
+import GoodsTable from '@/components/detail-components/GoodsTable.vue';
 
 // 模拟数据
-const contracts = ref([
-  {
-    id: 1,
-    name: '2023年度煤炭采购合同',
-    uploadTime: '2023-01-15 14:30',
-    details: {
-      contractNo: 'PC-2023-001',
-      supplier: '山西煤炭集团',
-      amount: '¥1,500,000',
-      signDate: '2023-01-10',
-      status: '已生效'
-    }
-  },
-  {
-    id: 2,
-    name: '铁矿石季度采购合同',
-    uploadTime: '2023-02-20 09:15',
-    details: {
-      contractNo: 'PC-2023-002',
-      supplier: '鞍钢集团',
-      amount: '¥2,300,000',
-      signDate: '2023-02-15',
-      status: '执行中'
-    }
-  },
-  {
-    id: 3,
-    name: '物流运输服务合同',
-    uploadTime: '2023-03-05 16:45',
-    details: {
-      contractNo: 'PC-2023-003',
-      supplier: '中铁物流',
-      amount: '¥800,000',
-      signDate: '2023-03-01',
-      status: '待审批'
-    }
-  }
-]);
-
-// 分页相关
+const contracts = ref([]);
 const currentPage = ref(1);
-const totalPages = ref(3);
+const totalPages = ref(1);
 
-// 处理搜索
+// 卡片主要显示列
+const cardMainColumns = [
+  { key: 'contractDate', label: '签订日期' },
+  { key: 'supplierName', label: '供应商' },
+  { key: 'totalAmount', label: '合同金额', formatter: formatCurrency },
+  { key: 'status', label: '状态' }
+];
+
+// 详情分组
+const detailGroups = [
+  {
+    title: '基本信息',
+    fields: [
+      { key: 'contractNo', label: '合同编号' },
+      { key: 'contractDate', label: '签订日期' },
+      { key: 'supplierName', label: '供应商' },
+      { key: 'supplierContact', label: '联系人' },
+      { key: 'supplierPhone', label: '联系电话' },
+      { key: 'totalAmount', label: '合同金额', formatter: formatCurrency },
+      { key: 'status', label: '状态' }
+    ]
+  },
+  {
+    title: '货物信息',
+    customComponent: 'goods-table',
+    dataKey: 'goods',
+    columns: [
+      { key: 'name', label: '货物名称' },
+      { key: 'specification', label: '规格' },
+      { key: 'quantity', label: '数量' },
+      { key: 'unit', label: '单位' },
+      { key: 'unitPrice', label: '单价', formatter: formatCurrency },
+      { key: 'total', label: '小计', formatter: formatCurrency, isTotal: true }
+    ],
+    showActions: true,
+    showFooter: true
+  },
+  {
+    title: '付款信息',
+    fields: [
+      { key: 'paymentMethod', label: '付款方式' },
+      { key: 'paymentTerms', label: '付款条件' },
+      { key: 'bankName', label: '开户银行' },
+      { key: 'bankAccount', label: '银行账号' }
+    ]
+  },
+  {
+    title: '其他信息',
+    fields: [
+      { key: 'deliveryDate', label: '交货日期' },
+      { key: 'deliveryAddress', label: '交货地点' },
+      { key: 'remarks', label: '备注' }
+    ]
+  }
+];
+
+// 注册自定义组件
+const customDetailComponents = {
+  'goods-table': GoodsTable
+};
+
+// 格式化货币
+function formatCurrency(value) {
+  if (value === undefined || value === null) return '';
+  
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) return value;
+  
+  return new Intl.NumberFormat('zh-CN', { 
+    style: 'currency', 
+    currency: 'CNY',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(numValue);
+}
+
+// 模拟获取数据
+const fetchData = async (page = 1) => {
+  // 模拟API请求延迟
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // 生成模拟数据
+  const mockContracts = [
+    {
+      id: 1,
+      contractNo: 'CT-2023-001',
+      contractDate: '2023-05-15',
+      supplierName: '北京供应商A有限公司',
+      supplierContact: '张经理',
+      supplierPhone: '13800138000',
+      totalAmount: 125000,
+      status: '已签署',
+      paymentMethod: '银行转账',
+      paymentTerms: '30%预付款，70%交货后付款',
+      bankName: '中国工商银行北京分行',
+      bankAccount: '6222021234567890123',
+      deliveryDate: '2023-06-30',
+      deliveryAddress: '北京市朝阳区某某路123号',
+      remarks: '年度采购合同',
+      goods: [
+        { id: 101, name: '原材料A', specification: '标准型', quantity: 100, unit: '吨', unitPrice: 800, total: 80000 },
+        { id: 102, name: '原材料B', specification: '高纯度', quantity: 50, unit: '吨', unitPrice: 900, total: 45000 }
+      ]
+    },
+    {
+      id: 2,
+      contractNo: 'CT-2023-002',
+      contractDate: '2023-05-20',
+      supplierName: '上海供应商B有限公司',
+      supplierContact: '李经理',
+      supplierPhone: '13900139000',
+      totalAmount: 86000,
+      status: '执行中',
+      paymentMethod: '银行转账',
+      paymentTerms: '50%预付款，50%交货后付款',
+      bankName: '中国建设银行上海分行',
+      bankAccount: '6227001234567890123',
+      deliveryDate: '2023-07-15',
+      deliveryAddress: '上海市浦东新区某某路456号',
+      remarks: '季度采购合同',
+      goods: [
+        { id: 201, name: '零部件A', specification: '标准型', quantity: 200, unit: '个', unitPrice: 150, total: 30000 },
+        { id: 202, name: '零部件B', specification: '加强型', quantity: 100, unit: '个', unitPrice: 200, total: 20000 },
+        { id: 203, name: '零部件C', specification: '特殊型', quantity: 120, unit: '个', unitPrice: 300, total: 36000 }
+      ]
+    }
+  ];
+  
+  contracts.value = mockContracts;
+  totalPages.value = 1;
+  currentPage.value = page;
+};
+
+// 事件处理函数
 const handleSearch = (query) => {
   console.log('搜索:', query);
-  // 实际应用中这里会调用API进行搜索
+  fetchData(1);
 };
 
-// 处理筛选
-const handleFilter = () => {
-  console.log('打开筛选面板');
-  // 实际应用中这里会打开筛选面板
-};
-
-// 处理排序
-const handleSort = () => {
-  console.log('打开排序面板');
-  // 实际应用中这里会打开排序面板
-};
-
-// 处理导出
-const handleExport = () => {
-  console.log('导出数据');
-  // 实际应用中这里会导出数据
-};
-
-// 处理查看
 const handleView = (contract) => {
   console.log('查看合同:', contract);
-  // 实际应用中这里会跳转到详情页或打开详情弹窗
 };
 
-// 处理编辑
 const handleEdit = (contract) => {
   console.log('编辑合同:', contract);
-  // 实际应用中这里会跳转到编辑页面
 };
 
-// 处理删除
 const handleDelete = (contract) => {
   console.log('删除合同:', contract);
-  if (confirm(`确定要删除"${contract.name}"吗？`)) {
-    // 实际应用中这里会调用API删除数据
-    contracts.value = contracts.value.filter(item => item.id !== contract.id);
-  }
+  fetchData(currentPage.value);
 };
 
-// 处理选择
-const handleSelect = (selectedItems) => {
-  console.log('选中的合同:', selectedItems);
-  // 实际应用中这里会更新选中状态
-};
-
-// 处理全选
-const handleSelectAll = (selectedItems) => {
-  console.log('全选/取消全选:', selectedItems);
-  // 实际应用中这里会更新全选状态
-};
-
-// 处理页码变化
 const handlePageChange = (page) => {
-  console.log('切换到页码:', page);
-  currentPage.value = page;
-  // 实际应用中这里会加载对应页的数据
+  fetchData(page);
 };
 
-// 组件挂载时加载数据
+// 初始化
 onMounted(() => {
-  // 实际应用中这里会从API加载数据
-  console.log('组件已挂载，加载数据');
+  fetchData();
 });
 </script>
 
