@@ -1,71 +1,70 @@
 /* 全局样式 */
 :root {
-    --primary-color: #1e88e5;
-    --primary-dark: #0a2463;
-    --primary-light: #e3f2fd;
-    --secondary-color: #ffa000;
-    --success-color: #4caf50;
-    --danger-color: #e53935;
-    --warning-color: #ff9800;
-    --info-color: #2196f3;
-    --text-primary: #212121;
-    --text-secondary: #757575;
-    --text-disabled: #9e9e9e;
-    --divider-color: #e0e0e0;
-    --background-color: #f5f7fa;
-    --card-color: #ffffff;
-  }
-  
-  html,
-  body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  
-  #app {
-    height: 100%;
-  }
-  
-  /* 滚动条样式 */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-  }
-  
-  /* 通用动画 */
-  .fade-enter-active,
-  .fade-leave-active {
-    transition: opacity 0.3s ease;
-  }
-  
-  .fade-enter-from,
-  .fade-leave-to {
-    opacity: 0;
-  }
-  
-  .slide-up-enter-active,
-  .slide-up-leave-active {
-    transition: transform 0.3s ease, opacity 0.3s ease;
-  }
-  
-  .slide-up-enter-from,
-  .slide-up-leave-to {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  
-  
+  --primary-color: #1e88e5;
+  --primary-dark: #0a2463;
+  --primary-light: #e3f2fd;
+  --secondary-color: #ffa000;
+  --success-color: #4caf50;
+  --danger-color: #e53935;
+  --warning-color: #ff9800;
+  --info-color: #2196f3;
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-disabled: #9e9e9e;
+  --divider-color: #e0e0e0;
+  --background-color: #f5f7fa;
+  --card-color: #ffffff;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  height: 100%;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 通用动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(20px);
+  opacity: 0;
+}
+

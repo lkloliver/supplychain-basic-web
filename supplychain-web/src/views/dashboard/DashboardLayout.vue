@@ -32,320 +32,490 @@
       
       <!-- 导航栏 -->
       <nav class="nav-bar">
-        <div 
+        <router-link 
           v-for="(item, index) in navItems" 
           :key="index"
-          :class="['nav-item', { active: activeNavItem === item.key }]"
-          @click="activeNavItem = item.key"
+          :to="item.route"
+          custom
+          v-slot="{ navigate, isActive }"
         >
-          <component :is="item.icon" class="nav-icon" />
-          <span>{{ item.label }}</span>
-        </div>
+          <div 
+            :class="['nav-item', { active: isActive }]"
+            @click="navigate"
+          >
+            <component :is="item.icon" class="nav-icon" />
+            <span>{{ item.label }}</span>
+          </div>
+        </router-link>
       </nav>
       
       <div class="content-container">
         <!-- 侧边栏 -->
         <aside class="sidebar">
-    <div class="module-nav">
-      <h3 class="nav-title">功能模块</h3>
-      
-      <div class="nav-group">
-        <div 
-          class="nav-group-header" 
-          @click="toggleNavGroup('contract')"
-        >
-          <FileTextIcon class="nav-icon" />
-          <span>合同模块</span>
-          <ChevronDownIcon 
-            class="nav-arrow" 
-            :class="{ 'rotate-180': expandedGroups.contract }" 
-          />
-        </div>
-        <div 
-          class="nav-group-content" 
-          v-show="expandedGroups.contract"
-        >
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'purchase-contract' }"
-            @click="navigateToModule('purchase-contract')"
-          >
-            <span>采购合同</span>
-          </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'sales-contract' }"
-            @click="navigateToModule('sales-contract')"
-          >
-            <span>销售合同</span>
-          </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'transport-contract' }"
-            @click="navigateToModule('transport-contract')"
-          >
-            <span>运输合同</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="nav-group">
-        <div 
-          class="nav-group-header" 
-          @click="toggleNavGroup('goods')"
-        >
-          <PackageIcon class="nav-icon" />
-          <span>货物模块</span>
-          <ChevronDownIcon 
-            class="nav-arrow" 
-            :class="{ 'rotate-180': expandedGroups.goods }" 
-          />
-        </div>
-        <div 
-          class="nav-group-content" 
-          v-show="expandedGroups.goods"
-        >
-          <template v-if="user.version === 'base'">
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'inbound-weight' }"
-              @click="navigateToModule('inbound-weight')"
-            >
-              <span>入库过磅单</span>
+          <div class="module-nav">
+            <h3 class="nav-title">功能模块</h3>
+            
+            <div class="nav-group">
+              <div 
+                class="nav-group-header" 
+                @click="toggleNavGroup('contract')"
+              >
+                <FileTextIcon class="nav-icon" />
+                <span>合同模块</span>
+                <ChevronDownIcon 
+                  class="nav-arrow" 
+                  :class="{ 'rotate-180': expandedGroups.contract }" 
+                />
+              </div>
+              <div 
+                class="nav-group-content" 
+                v-show="expandedGroups.contract"
+              >
+                <router-link 
+                  :to="{ name: 'PurchaseContract' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>采购合同</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'SalesContract' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>销售合同</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'TransportContract' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>运输合同</span>
+                  </div>
+                </router-link>
+              </div>
             </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'inbound-quality' }"
-              @click="navigateToModule('inbound-quality')"
-            >
-              <span>入库质检单</span>
+            
+            <div class="nav-group">
+              <div 
+                class="nav-group-header" 
+                @click="toggleNavGroup('goods')"
+              >
+                <PackageIcon class="nav-icon" />
+                <span>货物模块</span>
+                <ChevronDownIcon 
+                  class="nav-arrow" 
+                  :class="{ 'rotate-180': expandedGroups.goods }" 
+                />
+              </div>
+              <div 
+                class="nav-group-content" 
+                v-show="expandedGroups.goods"
+              >
+                <template v-if="user.version === 'base'">
+                  <router-link 
+                    :to="{ name: 'InboundWeight' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>入库过磅单</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'InboundQuality' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>入库质检单</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'InboundImage' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>入库图片</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'OutboundWeight' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>出库过磅单</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'OutboundQuality' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>出库质检单</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'OutboundImage' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>出库图片</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'PurchaseWaybill' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>采购运单</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'SalesWaybill' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>销售运单</span>
+                    </div>
+                  </router-link>
+                </template>
+                <template v-else>
+                  <router-link 
+                    :to="{ name: 'FactoryWeight' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>到货厂家过磅单</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'FactoryQuality' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>到货厂家质检单</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'FactoryImage' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>到货厂家图片</span>
+                    </div>
+                  </router-link>
+                  <router-link 
+                    :to="{ name: 'Waybill' }"
+                    custom
+                    v-slot="{ navigate, isActive }"
+                  >
+                    <div 
+                      class="nav-item" 
+                      :class="{ active: isActive }"
+                      @click="navigate"
+                    >
+                      <span>运单</span>
+                    </div>
+                  </router-link>
+                </template>
+              </div>
             </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'inbound-image' }"
-              @click="navigateToModule('inbound-image')"
-            >
-              <span>货物入库影像</span>
+            
+            <div class="nav-group">
+              <div 
+                class="nav-group-header" 
+                @click="toggleNavGroup('settlement')"
+              >
+                <CalculatorIcon class="nav-icon" />
+                <span>结算模块</span>
+                <ChevronDownIcon 
+                  class="nav-arrow" 
+                  :class="{ 'rotate-180': expandedGroups.settlement }" 
+                />
+              </div>
+              <div 
+                class="nav-group-content" 
+                v-show="expandedGroups.settlement"
+              >
+                <router-link 
+                  :to="{ name: 'PurchaseSettlement' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>采购结算</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'SalesSettlement' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>销售结算</span>
+                  </div>
+                </router-link>
+              </div>
             </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'outbound-weight' }"
-              @click="navigateToModule('outbound-weight')"
-            >
-              <span>出库过磅单</span>
+            
+            <div class="nav-group">
+              <div 
+                class="nav-group-header" 
+                @click="toggleNavGroup('finance')"
+              >
+                <DollarSignIcon class="nav-icon" />
+                <span>资金模块</span>
+                <ChevronDownIcon 
+                  class="nav-arrow" 
+                  :class="{ 'rotate-180': expandedGroups.finance }" 
+                />
+              </div>
+              <div 
+                class="nav-group-content" 
+                v-show="expandedGroups.finance"
+              >
+                <router-link 
+                  :to="{ name: 'PurchasePayment' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>采购付款</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'SalesReceipt' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>销售收款</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'TransportPayment' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>运输付款</span>
+                  </div>
+                </router-link>
+              </div>
             </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'outbound-quality' }"
-              @click="navigateToModule('outbound-quality')"
-            >
-              <span>出库质检单</span>
+            
+            <div class="nav-group">
+              <div 
+                class="nav-group-header" 
+                @click="toggleNavGroup('invoice')"
+              >
+                <FileTextIcon class="nav-icon" />
+                <span>发票模块</span>
+                <ChevronDownIcon 
+                  class="nav-arrow" 
+                  :class="{ 'rotate-180': expandedGroups.invoice }" 
+                />
+              </div>
+              <div 
+                class="nav-group-content" 
+                v-show="expandedGroups.invoice"
+              >
+                <router-link 
+                  :to="{ name: 'PurchaseInvoiceIn' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>采购进项发票</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'PurchaseInvoiceOut' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>采购销项发票</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'SalesInvoice' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>销售发票</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'TransportInvoice' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>运输发票</span>
+                  </div>
+                </router-link>
+              </div>
             </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'outbound-image' }"
-              @click="navigateToModule('outbound-image')"
-            >
-              <span>货物出库影像</span>
+            
+            <div class="nav-group">
+              <div 
+                class="nav-group-header" 
+                @click="toggleNavGroup('ledger')"
+              >
+                <BookIcon class="nav-icon" />
+                <span>台账模块</span>
+                <ChevronDownIcon 
+                  class="nav-arrow" 
+                  :class="{ 'rotate-180': expandedGroups.ledger }" 
+                />
+              </div>
+              <div 
+                class="nav-group-content" 
+                v-show="expandedGroups.ledger"
+              >
+                <router-link 
+                  :to="{ name: 'PurchaseLedger' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>采购台账</span>
+                  </div>
+                </router-link>
+                <router-link 
+                  :to="{ name: 'SalesLedger' }"
+                  custom
+                  v-slot="{ navigate, isActive }"
+                >
+                  <div 
+                    class="nav-item" 
+                    :class="{ active: isActive }"
+                    @click="navigate"
+                  >
+                    <span>销售台账</span>
+                  </div>
+                </router-link>
+              </div>
             </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'purchase-waybill' }"
-              @click="navigateToModule('purchase-waybill')"
-            >
-              <span>采购运单</span>
-            </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'sales-waybill' }"
-              @click="navigateToModule('sales-waybill')"
-            >
-              <span>销售运单</span>
-            </div>
-          </template>
-          <template v-else>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'factory-weight' }"
-              @click="navigateToModule('factory-weight')"
-            >
-              <span>到货厂家过磅单</span>
-            </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'factory-quality' }"
-              @click="navigateToModule('factory-quality')"
-            >
-              <span>到货厂家质检单</span>
-            </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'factory-image' }"
-              @click="navigateToModule('factory-image')"
-            >
-              <span>货物进厂影像</span>
-            </div>
-            <div 
-              class="nav-item" 
-              :class="{ active: activeModule === 'waybill' }"
-              @click="navigateToModule('waybill')"
-            >
-              <span>运单</span>
-            </div>
-          </template>
-        </div>
-      </div>
-      
-      <div class="nav-group">
-        <div 
-          class="nav-group-header" 
-          @click="toggleNavGroup('settlement')"
-        >
-          <CalculatorIcon class="nav-icon" />
-          <span>结算模块</span>
-          <ChevronDownIcon 
-            class="nav-arrow" 
-            :class="{ 'rotate-180': expandedGroups.settlement }" 
-          />
-        </div>
-        <div 
-          class="nav-group-content" 
-          v-show="expandedGroups.settlement"
-        >
-          <!-- 结算模块子项 -->
-        </div>
-      </div>
-      
-      <div class="nav-group">
-        <div 
-          class="nav-group-header" 
-          @click="toggleNavGroup('finance')"
-        >
-          <DollarSignIcon class="nav-icon" />
-          <span>资金模块</span>
-          <ChevronDownIcon 
-            class="nav-arrow" 
-            :class="{ 'rotate-180': expandedGroups.finance }" 
-          />
-        </div>
-        <div 
-          class="nav-group-content" 
-          v-show="expandedGroups.finance"
-        >
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'purchase-payment' }"
-            @click="navigateToModule('purchase-payment')"
-          >
-            <span>采购付款记录</span>
           </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'sales-receipt' }"
-            @click="navigateToModule('sales-receipt')"
-          >
-            <span>销售收款记录</span>
-          </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'transport-payment' }"
-            @click="navigateToModule('transport-payment')"
-          >
-            <span>运输付款记录</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="nav-group">
-        <div 
-          class="nav-group-header" 
-          @click="toggleNavGroup('invoice')"
-        >
-          <FileTextIcon class="nav-icon" />
-          <span>发票模块</span>
-          <ChevronDownIcon 
-            class="nav-arrow" 
-            :class="{ 'rotate-180': expandedGroups.invoice }" 
-          />
-        </div>
-        <div 
-          class="nav-group-content" 
-          v-show="expandedGroups.invoice"
-        >
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'purchase-invoice-in' }"
-            @click="navigateToModule('purchase-invoice-in')"
-          >
-            <span>采购收票</span>
-          </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'purchase-invoice-out' }"
-            @click="navigateToModule('purchase-invoice-out')"
-          >
-            <span>采购反向开票</span>
-          </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'sales-invoice' }"
-            @click="navigateToModule('sales-invoice')"
-          >
-            <span>销售开票</span>
-          </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'transport-invoice' }"
-            @click="navigateToModule('transport-invoice')"
-          >
-            <span>运输收票</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="nav-group">
-        <div 
-          class="nav-group-header" 
-          @click="toggleNavGroup('ledger')"
-        >
-          <BookIcon class="nav-icon" />
-          <span>台账模块</span>
-          <ChevronDownIcon 
-            class="nav-arrow" 
-            :class="{ 'rotate-180': expandedGroups.ledger }" 
-          />
-        </div>
-        <div 
-          class="nav-group-content" 
-          v-show="expandedGroups.ledger"
-        >
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'purchase-ledger' }"
-            @click="navigateToModule('purchase-ledger')"
-          >
-            <span>采购台账</span>
-          </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeModule === 'sales-ledger' }"
-            @click="navigateToModule('sales-ledger')"
-          >
-            <span>销售台账</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </aside>
+        </aside>
         
-        <!-- 仪表盘 -->
+        <!-- 主内容区域 - 路由视图 -->
         <main class="dashboard">
-          <div v-if="user.version === 'base'">
-            <BaseVersionDashboard :active-module="activeModule" />
-          </div>
-          <div v-else>
-            <NonBaseVersionDashboard :active-module="activeModule" />
-          </div>
+          <router-view :key="$route.fullPath"></router-view>
         </main>
       </div>
     </div>
@@ -368,11 +538,12 @@
     CalculatorIcon,
     DollarSignIcon,
     BookIcon,
-    ChevronDownIcon
+    ChevronDownIcon,
+    ImageIcon,
+    ClipboardCheckIcon,
+    ScaleIcon,
+    TruckIcon
   } from 'lucide-vue-next';
-  
-  import BaseVersionDashboard from './BaseVersionDashboard.vue';
-  import NonBaseVersionDashboard from './NonBaseVersionDashboard.vue';
   
   const router = useRouter();
   const userStore = useUserStore();
@@ -388,17 +559,11 @@
   
   // 导航项
   const navItems = [
-    { key: 'home', label: '首页', icon: HomeIcon },
-    { key: 'todo', label: '待办', icon: ClipboardListIcon },
-    { key: 'processing', label: '办理中', icon: ClockIcon },
-    { key: 'completed', label: '已办', icon: CheckSquareIcon }
+    { key: 'home', label: '首页', icon: HomeIcon, route: { name: 'DashboardHome' } },
+    { key: 'todo', label: '待办', icon: ClipboardListIcon, route: { path: '/dashboard/todo' } },
+    { key: 'processing', label: '办理中', icon: ClockIcon, route: { path: '/dashboard/processing' } },
+    { key: 'completed', label: '已办', icon: CheckSquareIcon, route: { path: '/dashboard/completed' } }
   ];
-  
-  // 当前激活的导航项
-  const activeNavItem = ref('home');
-  
-  // 当前激活的模块
-  const activeModule = ref('');
   
   // 展开的导航组
   const expandedGroups = reactive({
@@ -413,13 +578,6 @@
   // 切换导航组展开状态
   const toggleNavGroup = (group: string) => {
     expandedGroups[group as keyof typeof expandedGroups] = !expandedGroups[group as keyof typeof expandedGroups];
-  };
-  
-  // 导航到模块
-  const navigateToModule = (module: string) => {
-    activeModule.value = module;
-    // 这里可以根据需要添加路由导航或其他逻辑
-    console.log('导航到模块:', module);
   };
   
   // 退出登录
@@ -440,8 +598,8 @@
   .dashboard-container {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    background-color: #f5f7fa;
+    height: 100vh;
+    overflow: hidden;
   }
   
   /* 顶栏样式 */
@@ -449,11 +607,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 64px;
-    padding: 0 1.5rem;
-    background-color: #0a2463;
-    color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 0 20px;
+    height: 60px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 10;
   }
   
   .logo-section {
@@ -462,15 +620,15 @@
   }
   
   .logo {
-    width: 32px;
-    height: 32px;
-    margin-right: 0.75rem;
+    height: 40px;
+    width: auto;
+    margin-right: 10px;
   }
   
   .system-title {
-    font-size: 1.25rem;
+    font-size: 18px;
     font-weight: 600;
-    margin: 0;
+    color: #333;
   }
   
   .user-section {
@@ -481,15 +639,24 @@
     display: flex;
     align-items: center;
     cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .user-info:hover {
+    background-color: #f5f5f5;
   }
   
   .username {
-    margin-right: 0.75rem;
+    margin-right: 10px;
+    font-size: 14px;
+    color: #333;
   }
   
   .avatar {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
   }
@@ -499,20 +666,19 @@
     top: 100%;
     right: 0;
     width: 180px;
-    background-color: white;
+    background-color: #fff;
     border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    margin-top: 0.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     z-index: 100;
+    margin-top: 5px;
   }
   
   .menu-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
-    color: #424242;
+    padding: 10px 15px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.2s;
   }
   
   .menu-item:hover {
@@ -520,43 +686,49 @@
   }
   
   .menu-icon {
-    width: 18px;
-    height: 18px;
-    margin-right: 0.75rem;
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+    color: #666;
   }
   
   /* 导航栏样式 */
   .nav-bar {
     display: flex;
-    background-color: #1e88e5;
-    color: white;
-    padding: 0 1.5rem;
+    background-color: #f5f7fa;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 20px;
+    height: 50px;
+    overflow-x: auto;
   }
   
   .nav-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1.25rem;
+    padding: 0 15px;
+    height: 100%;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.2s;
+    white-space: nowrap;
+    color: #666;
   }
   
   .nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    color: #1890ff;
   }
   
   .nav-item.active {
-    background-color: rgba(255, 255, 255, 0.2);
-    font-weight: 500;
+    color: #1890ff;
+    border-bottom: 2px solid #1890ff;
   }
   
   .nav-icon {
     width: 18px;
     height: 18px;
-    margin-right: 0.5rem;
+    margin-right: 8px;
   }
   
-  /* 内容区域样式 */
+  /* 内容容器样式 */
   .content-container {
     display: flex;
     flex: 1;
@@ -565,93 +737,115 @@
   
   /* 侧边栏样式 */
   .sidebar {
-    width: 280px;
-    background-color: white;
+    width: 240px;
+    background-color: #f5f7fa;
     border-right: 1px solid #e0e0e0;
     overflow-y: auto;
+    flex-shrink: 0;
   }
   
   .module-nav {
-    display: flex;
-    flex-direction: column;
+    padding: 15px 0;
   }
   
   .nav-title {
-    font-size: 1.125rem;
+    padding: 0 20px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #999;
     font-weight: 600;
-    margin: 1.5rem 1.5rem 1rem;
-    color: #0a2463;
   }
   
   .nav-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 0.5rem;
+    margin-bottom: 5px;
   }
   
   .nav-group-header {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1.5rem;
+    padding: 10px 20px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.2s;
+    color: #333;
   }
   
   .nav-group-header:hover {
-    background-color: #f5f7fa;
+    background-color: #e6f7ff;
   }
   
-  .nav-icon {
-    width: 18px;
-    height: 18px;
-    margin-right: 0.75rem;
-    color: #1e88e5;
+  .nav-group-content {
+    padding: 5px 0;
+  }
+  
+  .nav-group-content .nav-item {
+    padding: 8px 20px 8px 48px;
+    height: auto;
+    color: #666;
+  }
+  
+  .nav-group-content .nav-item:hover {
+    background-color: #e6f7ff;
+    color: #1890ff;
+  }
+  
+  .nav-group-content .nav-item.active {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border-right: 3px solid #1890ff;
+    border-bottom: none;
   }
   
   .nav-arrow {
     width: 16px;
     height: 16px;
     margin-left: auto;
-    color: #757575;
-    transition: transform 0.3s;
+    transition: transform 0.2s;
   }
   
   .rotate-180 {
     transform: rotate(180deg);
   }
   
-  .nav-group-content {
-    display: flex;
-    flex-direction: column;
-    padding-left: 1rem;
-  }
-  
-  .nav-item {
-    display: flex;
-    align-items: center;
-    padding: 0.625rem 1.5rem 0.625rem 2.25rem;
-    font-size: 0.875rem;
-    color: #424242;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  
-  .nav-item:hover {
-    background-color: #f5f7fa;
-    color: #1e88e5;
-  }
-  
-  .nav-item.active {
-    background-color: #e3f2fd;
-    color: #1e88e5;
-    font-weight: 500;
-  }
-  
-  /* 仪表盘样式 */
+  /* 主内容区域样式 */
   .dashboard {
     flex: 1;
-    padding: 1.5rem;
+    padding: 20px;
     overflow-y: auto;
+    background-color: #f0f2f5;
+  }
+  
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .sidebar {
+      width: 200px;
+    }
+    
+    .system-title {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .sidebar {
+      position: fixed;
+      left: -240px;
+      top: 110px;
+      bottom: 0;
+      z-index: 100;
+      transition: left 0.3s;
+    }
+    
+    .sidebar.open {
+      left: 0;
+    }
+    
+    .nav-bar {
+      padding: 0 10px;
+    }
+    
+    .nav-item {
+      padding: 0 10px;
+    }
   }
   </style>
   
