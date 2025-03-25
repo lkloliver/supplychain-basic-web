@@ -510,6 +510,77 @@
               </router-link>
             </div>
           </div>
+          
+          <div class="nav-group" v-if="isAdmin">
+            <div 
+              class="nav-group-header" 
+              @click="toggleNavGroup('access')"
+            >
+              <ShieldIcon class="nav-icon" />
+              <span>访问控制</span>
+              <ChevronDownIcon 
+                class="nav-arrow" 
+                :class="{ 'rotate-180': expandedGroups.access }" 
+              />
+            </div>
+            <div 
+              class="nav-group-content" 
+              v-show="expandedGroups.access"
+            >
+              <router-link 
+                :to="{ name: 'UserManagement' }"
+                custom
+                v-slot="{ navigate, isActive }"
+              >
+                <div 
+                  class="nav-item" 
+                  :class="{ active: isActive }"
+                  @click="navigate"
+                >
+                  <span>用户管理</span>
+                </div>
+              </router-link>
+              <router-link 
+                :to="{ name: 'DepartmentManagement' }"
+                custom
+                v-slot="{ navigate, isActive }"
+              >
+                <div 
+                  class="nav-item" 
+                  :class="{ active: isActive }"
+                  @click="navigate"
+                >
+                  <span>部门管理</span>
+                </div>
+              </router-link>
+              <router-link 
+                :to="{ name: 'RoleManagement' }"
+                custom
+                v-slot="{ navigate, isActive }"
+              >
+                <div 
+                  class="nav-item" 
+                  :class="{ active: isActive }"
+                  @click="navigate"
+                >
+                  <span>角色管理</span>
+                </div>
+              </router-link>
+              <router-link 
+                :to="{ name: 'PermissionManagement' }"
+                custom
+                v-slot="{ navigate, isActive }"
+              >
+                <div 
+                  class="nav-item" 
+                  :class="{ active: isActive }"
+                  @click="navigate"
+                >
+                  <span>权限管理</span>
+                </div>
+              </router-link>
+            </div>
+          </div>
         </div>
       </aside>
       
@@ -542,7 +613,10 @@ import {
   ImageIcon,
   ClipboardCheckIcon,
   ScaleIcon,
-  TruckIcon
+  TruckIcon,
+  ShieldIcon,  // 添加访问控制图标
+  UsersIcon,    // 添加用户图标
+  BriefcaseIcon // 添加部门图标
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -560,10 +634,9 @@ const toggleUserMenu = () => {
 // 导航项
 const navItems = [
   { key: 'home', label: '首页', icon: HomeIcon, route: { name: 'DashboardHome' } },
-  { key: 'user-center', label: '个人中心', icon: UserIcon, route: { name: 'UserCenter' } },
-  //{ key: 'todo', label: '待办', icon: ClipboardListIcon, route: { path: '/dashboard/todo' } },
-  //{ key: 'processing', label: '办理中', icon: ClockIcon, route: { path: '/dashboard/processing' } },
-  //{ key: 'completed', label: '已办', icon: CheckSquareIcon, route: { path: '/dashboard/completed' } }
+  { key: 'todo', label: '待办', icon: ClipboardListIcon, route: { path: '/dashboard/todo' } },
+  { key: 'processing', label: '办理中', icon: ClockIcon, route: { path: '/dashboard/processing' } },
+  { key: 'completed', label: '已办', icon: CheckSquareIcon, route: { path: '/dashboard/completed' } }
 ];
 
 // 展开的导航组
@@ -573,8 +646,12 @@ const expandedGroups = reactive({
   settlement: false,
   finance: false,
   invoice: false,
-  ledger: false
+  ledger: false,
+  access: false  // 添加访问控制组
 });
+
+// 添加isAdmin计算属性
+const isAdmin = computed(() => userStore.isAdmin);
 
 // 切换导航组展开状态
 const toggleNavGroup = (group: string) => {

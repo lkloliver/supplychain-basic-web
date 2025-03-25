@@ -556,6 +556,33 @@ const routes = [
           },
         ],
       },
+      // 访问控制模块
+      {
+        path: "access",
+        meta: { requiresAdmin: true },
+        children: [
+          {
+            path: "user",
+            name: "UserManagement",
+            component: () => import("@/views/access/UserManagement.vue"),
+          },
+          {
+            path: "department",
+            name: "DepartmentManagement",
+            component: () => import("@/views/access/DepartmentManagement.vue"),
+          },
+          {
+            path: "role",
+            name: "RoleManagement",
+            component: () => import("@/views/access/RoleManagement.vue"),
+          },
+          {
+            path: "permission",
+            name: "PermissionManagement",
+            component: () => import("@/views/access/PermissionManagement.vue"),
+          },
+        ],
+      },
     ],
   },
 ]

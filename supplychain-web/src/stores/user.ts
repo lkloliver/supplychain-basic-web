@@ -5,6 +5,7 @@ interface User {
   username?: string
   phone?: string
   version: "base" | "non-base"
+  role?: string // 添加角色字段
 }
 
 export const useUserStore = defineStore("user", () => {
@@ -14,6 +15,11 @@ export const useUserStore = defineStore("user", () => {
 
   const isLoggedIn = computed(() => {
     return !!(user.value.username || user.value.phone)
+  })
+
+  // 判断是否为管理员
+  const isAdmin = computed(() => {
+    return user.value.role === "admin"
   })
 
   function setUser(userData: User) {
@@ -48,6 +54,7 @@ export const useUserStore = defineStore("user", () => {
   return {
     user,
     isLoggedIn,
+    isAdmin,
     setUser,
     clearUser,
   }
