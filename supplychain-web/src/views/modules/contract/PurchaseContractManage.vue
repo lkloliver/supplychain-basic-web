@@ -64,17 +64,19 @@ const detailGroups = [
     ]
   },
   {
-    title: '货物信息',
-    customComponent: 'goods-table',
-    dataKey: 'goods',
-    columns: [
-      { key: 'name', label: '货物名称', width: '25%' },
-      { key: 'quantity', label: '货物数量', width: '20%' },
-      { key: 'price', label: '货物价格', width: '20%', formatter: formatCurrency },
-      { key: 'specification', label: '规格型号', width: '25%' }
-    ],
-    showActions: false,
-    showFooter: true
+    key: 'goods',
+    label: '货物信息',
+    component: 'goods-table',
+    props: {
+      columns: [
+        { key: 'name', label: '货物名称' },
+        { key: 'quantity', label: '货物数量' },
+        { key: 'price', label: '货物价格' },
+        { key: 'specification', label: '规格型号' }
+      ],
+      showFooter: true,
+      showActions: true
+    }
   }
 ];
 

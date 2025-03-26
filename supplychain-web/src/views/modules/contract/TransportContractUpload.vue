@@ -1,12 +1,14 @@
 <template>
   <DocumentUploadTemplate
     title="运输合同上传"
+    detailsTitle="合同详情"
     backRouteName="DashboardHome"
     uploadRouteName="/dashboard/contract/transport/upload"
     manageRouteName="/dashboard/contract/transport/manage"
     :detailFields="detailFields"
-    @submit="handleSubmit"
-    @recognize="handleRecognize"
+    :onSubmit="handleSubmit"
+    :onAIRecognize="handleRecognize"
+    :customComponents="customComponents"
   />
 </template>
 
@@ -14,93 +16,112 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
+import { mockTransportContractRecognition } from '@/mocks/contract/transport';
+import TransportDetailsTable from '@/components/detail-components/TransportDetailsTable.vue';
+import TransportDetailsInput from '@/components/upload-components/TransportDetailsInput.vue';
 
 const router = useRouter();
 
-// 定义详情字段
+const customComponents = {
+  'transport-details-table': TransportDetailsTable,
+  'transport-details-input': TransportDetailsInput
+};
+
+// 详情字段配置
 const detailFields = [
   {
-    key: 'contractNo',
-    label: '合同编号',
+    key: 'carrier',
+    label: '承运方信息',
     type: 'text',
-    placeholder: '请输入合同编号'
+    required: true
   },
   {
-    key: 'transporter',
-    label: '运输商',
+    key: 'shipper',
+    label: '托运方信息',
     type: 'text',
-    placeholder: '请输入运输商'
+    required: true
   },
   {
-    key: 'route',
-    label: '运输路线',
+    key: 'startTime',
+    label: '合同起始时间',
+    type: 'date',
+    required: true
+  },
+  {
+    key: 'endTime',
+    label: '合同截止时间',
+    type: 'date',
+    required: true
+  },
+  {
+    key: 'signDate',
+    label: '签订日期',
+    type: 'date',
+    required: true
+  },
+  {
+    key: 'handler',
+    label: '经办人',
     type: 'text',
-    placeholder: '请输入运输路线'
+    required: true
   },
   {
-    key: 'quantity',
-    label: '运输量',
-    type: 'number',
-    placeholder: '请输入运输量'
+    key: 'transportMethod',
+    label: '运输方式',
+    type: 'select',
+    options: [
+      { label: '公路运输', value: '公路运输' },
+      { label: '铁路运输', value: '铁路运输' },
+      { label: '水路运输', value: '水路运输' },
+      { label: '航空运输', value: '航空运输' }
+    ],
+    required: true
   },
   {
-    key: 'unitPrice',
-    label: '单价',
-    type: 'number',
-    placeholder: '请输入单价'
-  },
-  {
-    key: 'amount',
-    label: '合同金额',
-    type: 'number',
-    placeholder: '请输入合同金额'
-  },
-  {
-    key: 'startDate',
-    label: '开始日期',
-    type: 'date'
-  },
-  {
-    key: 'endDate',
-    label: '结束日期',
-    type: 'date'
+    key: 'transportDetails',
+    label: '运输明细',
+    type: 'array',
+    itemLabel: '运输路线',
+    fields: [
+      {
+        key: 'startLocation',
+        label: '起运地',
+        type: 'text',
+        required: true
+      },
+      {
+        key: 'endLocation',
+        label: '目的地',
+        type: 'text',
+        required: true
+      },
+      {
+        key: 'category',
+        label: '名称/品类',
+        type: 'text',
+        required: true
+      },
+      {
+        key: 'unitPrice',
+        label: '含税运输单价',
+        type: 'number',
+        required: true
+      }
+    ]
   }
 ];
 
-// 处理AI识别
-const handleRecognize = async (file) => {
-  // 模拟AI识别过程
-  console.log('正在识别文档...', file.name);
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟识别结果
-      const result = {
-        contractNo: 'TC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        transporter: '自动识别运输商',
-        route: '自动识别路线',
-        quantity: Math.floor(Math.random() * 1000).toString(),
-        unitPrice: Math.floor(Math.random() * 100).toString(),
-        amount: Math.floor(Math.random() * 100000).toString(),
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      };
-      
-      alert('文档识别完成');
-      resolve(result);
-    }, 1500);
-  });
+// 处理提交
+const handleSubmit = async (formData: any) => {
+  console.log('提交运输合同数据', formData);
+  return true;
 };
 
-// 处理提交
-const handleSubmit = (formData) => {
-  console.log('提交运输合同数据', formData);
-  
-  // 模拟API调用
-  setTimeout(() => {
-    alert('运输合同上传成功');
-    router.push({ name: 'TransportContractManage' });
-  }, 1000);
+// 处理AI识别
+const handleRecognize = async (file: File) => {
+  console.log('识别运输合同文件', file);
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  return mockTransportContractRecognition;
 };
 </script>
 

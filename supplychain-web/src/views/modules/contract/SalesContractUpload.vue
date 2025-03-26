@@ -1,84 +1,172 @@
 <template>
   <DocumentUploadTemplate
     title="销售合同上传"
+    detailsTitle="合同详情"
     backRouteName="DashboardHome"
     uploadRouteName="/dashboard/contract/sales/upload"
     manageRouteName="/dashboard/contract/sales/manage"
     :detailFields="detailFields"
-    @submit="handleSubmit"
-    @recognize="handleRecognize"
+    :onSubmit="handleSubmit"
+    :onAIRecognize="handleRecognize"
   />
 </template>
 
-<script lang="ts" setup>
-import { ref, reactive } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
+import { mockSalesContractRecognition } from '@/mocks/contract/sales';
 
 const router = useRouter();
 
 // 详情字段配置
 const detailFields = [
   {
-    id: 'contractNo',
-    label: '合同编号',
+    key: 'contractNo',
+    label: '销售合同编号',
     type: 'text',
-    placeholder: '请输入合同编号'
+    placeholder: '请输入合同编号',
+    required: true
   },
   {
-    id: 'customer',
-    label: '客户',
-    type: 'text',
-    placeholder: '请输入客户'
+    key: 'signDate',
+    label: '签订时间',
+    type: 'date',
+    required: true
   },
   {
-    id: 'amount',
+    key: 'buyer',
+    label: '买方信息',
+    type: 'text',
+    required: true
+  },
+  {
+    key: 'seller',
+    label: '卖方信息',
+    type: 'text',
+    required: true
+  },
+  {
+    key: 'paymentAccount',
+    label: '付款账户',
+    type: 'text'
+  },
+  {
+    key: 'receivingAccount',
+    label: '收款账户',
+    type: 'text'
+  },
+  {
+    key: 'taxRate',
+    label: '税率',
+    type: 'text'
+  },
+  {
+    key: 'invoiceType',
+    label: '发票类型',
+    type: 'select',
+    options: [
+      { label: '增值税专用发票', value: '增值税专用发票' },
+      { label: '增值税普通发票', value: '增值税普通发票' }
+    ]
+  },
+  {
+    key: 'paymentDate',
+    label: '付款时间',
+    type: 'date'
+  },
+  {
+    key: 'paymentMethod',
+    label: '付款方式',
+    type: 'text'
+  },
+  {
+    key: 'performancePeriod',
+    label: '履约期限',
+    type: 'text'
+  },
+  {
+    key: 'performanceLocation',
+    label: '履约地点',
+    type: 'text'
+  },
+  {
+    key: 'performanceMethod',
+    label: '履约方式',
+    type: 'text'
+  },
+  {
+    key: 'handler',
+    label: '经办人信息',
+    type: 'text'
+  },
+  {
+    key: 'totalAmount',
     label: '合同金额',
     type: 'number',
-    placeholder: '请输入合同金额'
+    required: true
   },
   {
-    id: 'startDate',
-    label: '开始日期',
-    type: 'date',
-    placeholder: ''
+    key: 'remarks',
+    label: '备注',
+    type: 'textarea',
+    rows: 3
   },
   {
-    id: 'endDate',
-    label: '结束日期',
-    type: 'date',
-    placeholder: ''
+    key: 'goods',
+    label: '货物明细',
+    type: 'array',
+    itemLabel: '货物',
+    fields: [
+      {
+        key: 'name',
+        label: '货物名称',
+        type: 'text',
+        required: true
+      },
+      {
+        key: 'quantity',
+        label: '货物数量',
+        type: 'number',
+        required: true
+      },
+      {
+        key: 'price',
+        label: '货物价格',
+        type: 'number',
+        required: true
+      },
+      {
+        key: 'specification',
+        label: '规格型号',
+        type: 'text'
+      }
+    ],
+    itemTemplate: {
+      name: '',
+      quantity: 0,
+      price: 0,
+      specification: ''
+    }
   }
 ];
 
 // 处理提交
-const handleSubmit = (formData) => {
+const handleSubmit = async (formData: any) => {
   console.log('提交销售合同数据', formData);
   
   // 模拟API调用
-  setTimeout(() => {
-    alert('销售合同上传成功');
-    router.push({ name: manageRouteName });
-  }, 1000);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return true;
 };
 
 // 处理AI识别
-const handleRecognize = (file) => {
+const handleRecognize = async (file: File) => {
   console.log('识别销售合同文件', file);
   
   // 模拟AI识别过程
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 返回识别结果
-      resolve({
-        contractNo: 'SC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        customer: '自动识别客户',
-        amount: Math.floor(Math.random() * 1000000).toString(),
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      });
-    }, 1500);
-  });
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  return mockSalesContractRecognition;
 };
 </script>
 

@@ -170,23 +170,48 @@ const detailFields = [
   {
     key: 'goods',
     label: '货物明细',
-    customComponent: 'goods-table-input',
-    props: {
-      columns: [
-        { key: 'name', label: '货物名称', width: '25%' },
-        { key: 'quantity', label: '货物数量', type: 'number', width: '20%' },
-        { key: 'price', label: '货物价格', type: 'number', width: '20%' },
-        { key: 'specification', label: '规格型号', width: '25%' }
-      ],
-      rowTemplate: {
-        name: '',
-        quantity: 0,
-        price: 0,
-        specification: ''
+    type: 'array',
+    itemLabel: '货物',
+    fields: [
+      {
+        key: 'name',
+        label: '货物名称',
+        type: 'text',
+        required: true,
+        placeholder: '请输入货物名称'
+      },
+      {
+        key: 'quantity',
+        label: '货物数量',
+        type: 'number',
+        required: true,
+        placeholder: '请输入数量'
+      },
+      {
+        key: 'price',
+        label: '货物价格',
+        type: 'number',
+        required: true,
+        placeholder: '请输入价格'
+      },
+      {
+        key: 'specification',
+        label: '规格型号',
+        type: 'text',
+        required: true,
+        placeholder: '请输入规格型号'
       }
-    },
-    required: true
-  }, 
+    ],
+    showTotal: true, // 显示合计行
+    totalFields: ['price'], // 需要合计的字段
+    formatters: {
+      // 价格格式化
+      price: (value) => new Intl.NumberFormat('zh-CN', {
+        style: 'currency',
+        currency: 'CNY'
+      }).format(value)
+    }
+  },
     // 可以添加备注等其他字段
     {
       key: 'remarks',

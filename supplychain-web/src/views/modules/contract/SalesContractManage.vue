@@ -5,21 +5,33 @@
     uploadRouteName="/dashboard/contract/sales/upload"
     manageRouteName="/dashboard/contract/sales/manage"
     :documents="contracts"
-    :tableColumns="tableColumns"
-    :tableData="contracts"
-    :totalPages="totalPages"
+    titleField="contractNo"
+    titleColumnName="合同编号"
+    :cardMainColumns="cardMainColumns"
+    :detailGroups="detailGroups"
+    :customDetailComponents="customDetailComponents"
+    searchPlaceholder="搜索合同..."
     :currentPage="currentPage"
-    @page-change="handlePageChange"
+    :totalPages="totalPages"
     @search="handleSearch"
     @view="handleView"
     @edit="handleEdit"
     @delete="handleDelete"
+    @page-change="handlePageChange"
   />
 </template>
 
-<script lang="ts" setup>
-import { ref, reactive } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
+import GoodsTable from '@/components/detail-components/GoodsTable.vue';
+import { fetchSalesContracts, deleteSalesContract, type SalesContract } from '@/mocks/contract/sales';
+
+// 状态
+const contracts = ref<SalesContract[]>([]);
+const currentPage = ref(1);
+const totalPages = ref(1);
+const pageSize = 10;
 
 // 表格列配置
 const tableColumns = [
@@ -46,102 +58,110 @@ const tableColumns = [
   }
 ];
 
-// 分页
-const currentPage = ref(1);
-const totalPages = ref(5);
+// 卡片主要显示列
+const cardMainColumns = [
+  { key: 'contractNo', label: '合同名称' },
+  { key: 'buyer', label: '买方' },
+  { key: 'seller', label: '卖方' }
+];
 
-// 模拟数据
-const contracts = ref([
+// 详情分组
+const detailGroups = [
   {
-    id: '1',
-    number: 'SC-2023001',
-    date: '2023-01-15',
-    customer: '上海食品有限公司',
-    product: '小麦',
-    quantity: 1000,
-    unitPrice: 3.2,
-    totalAmount: 3200,
-    status: 'active'
+    title: '基本信息',
+    fields: [
+      { key: 'contractNo', label: '销售合同编号' },
+      { key: 'signDate', label: '签订时间' },
+      { key: 'buyer', label: '买方信息' },
+      { key: 'seller', label: '卖方信息' },
+      { key: 'paymentAccount', label: '付款账户' },
+      { key: 'receivingAccount', label: '收款账户' },
+      { key: 'taxRate', label: '税率' },
+      { key: 'invoiceType', label: '发票类型' },
+      { key: 'paymentDate', label: '付款时间' },
+      { key: 'paymentMethod', label: '付款方式' },
+      { key: 'performancePeriod', label: '履约期限' },
+      { key: 'performanceLocation', label: '履约地点' },
+      { key: 'performanceMethod', label: '履约方式' },
+      { key: 'handler', label: '经办人信息' },
+      { key: 'totalAmount', label: '合同金额', formatter: formatCurrency },
+      { key: 'remarks', label: '备注' }
+    ]
   },
   {
-    id: '2',
-    number: 'SC-2023002',
-    date: '2023-02-20',
-    customer: '北京餐饮集团',
-    product: '玉米',
-    quantity: 1500,
-    unitPrice: 2.5,
-    totalAmount: 3750,
-    status: 'active'
-  },
-  {
-    id: '3',
-    number: 'SC-2023003',
-    date: '2023-03-10',
-    customer: '广州食品加工厂',
-    product: '大豆',
-    quantity: 800,
-    unitPrice: 5.0,
-    totalAmount: 4000,
-    status: 'completed'
-  },
-  {
-    id: '4',
-    number: 'SC-2023004',
-    date: '2023-04-05',
-    customer: '深圳贸易有限公司',
-    product: '水稻',
-    quantity: 1200,
-    unitPrice: 3.8,
-    totalAmount: 4560,
-    status: 'expired'
-  },
-  {
-    id: '5',
-    number: 'SC-2023005',
-    date: '2023-05-18',
-    customer: '杭州食品企业',
-    product: '小麦',
-    quantity: 2000,
-    unitPrice: 3.1,
-    totalAmount: 6200,
-    status: 'active'
+    title: '货物信息',
+    customComponent: 'goods-table',
+    dataKey: 'goods',
+    columns: [
+      { key: 'name', label: '货物名称', width: '25%' },
+      { key: 'quantity', label: '货物数量', width: '20%' },
+      { key: 'price', label: '货物价格', width: '20%', formatter: formatCurrency },
+      { key: 'specification', label: '规格型号', width: '25%' }
+    ],
+    showActions: false,
+    showFooter: true
   }
-]);
+];
 
-// 处理页面变化
-const handlePageChange = (page) => {
-  currentPage.value = page;
-  // 在实际应用中，这里会调用API获取对应页的数据
-  console.log('切换到页面:', page);
+// 注册自定义组件
+const customDetailComponents = {
+  'goods-table': GoodsTable
 };
 
-// 处理搜索
-const handleSearch = (searchParams) => {
-  console.log('搜索参数:', searchParams);
-  // 在实际应用中，这里会调用API进行搜索
-};
+// 格式化货币
+function formatCurrency(value: number): string {
+  if (value === undefined || value === null) return '';
+  
+  return new Intl.NumberFormat('zh-CN', { 
+    style: 'currency', 
+    currency: 'CNY',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
 
-// 处理查看
-const handleView = (item) => {
-  console.log('查看合同:', item);
-  // 在实际应用中，这里会跳转到详情页或打开详情弹窗
-};
-
-// 处理编辑
-const handleEdit = (item) => {
-  console.log('编辑合同:', item);
-  // 在实际应用中，这里会跳转到编辑页或打开编辑弹窗
-};
-
-// 处理删除
-const handleDelete = (item) => {
-  console.log('删除合同:', item);
-  // 在实际应用中，这里会调用API删除数据
-  if (confirm(`确定要删除合同 ${item.number} 吗？`)) {
-    // 模拟删除操作
-    contracts.value = contracts.value.filter(contract => contract.id !== item.id);
+// 获取数据
+const fetchData = async (page = 1) => {
+  try {
+    const response = await fetchSalesContracts(page, pageSize);
+    contracts.value = response.data;
+    totalPages.value = Math.ceil(response.total / pageSize);
+    currentPage.value = page;
+  } catch (error) {
+    console.error('获取合同列表失败:', error);
   }
 };
+
+// 事件处理函数
+const handleSearch = (query: string) => {
+  console.log('搜索:', query);
+  fetchData(1);
+};
+
+const handleView = (contract: SalesContract) => {
+  console.log('查看合同:', contract);
+};
+
+const handleEdit = (contract: SalesContract) => {
+  console.log('编辑合同:', contract);
+};
+
+const handleDelete = async (contract: SalesContract) => {
+  try {
+    await deleteSalesContract(contract.id);
+    await fetchData(currentPage.value);
+  } catch (error) {
+    console.error('删除合同失败:', error);
+  }
+};
+
+const handlePageChange = (page: number) => {
+  fetchData(page);
+};
+
+// 初始化
+onMounted(() => {
+  fetchData();
+});
 </script>
 
