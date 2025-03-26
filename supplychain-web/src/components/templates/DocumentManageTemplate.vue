@@ -86,10 +86,6 @@
             
             <div class="card-content">
               <div class="card-main-info">
-                <div v-if="showUploadTime" class="card-info-item">
-                  <span class="info-label">上传时间</span>
-                  <span class="info-value">{{ getDocumentUploadTime(doc) }}</span>
-                </div>
                 <div 
                   v-for="column in cardMainColumns" 
                   :key="column.key" 

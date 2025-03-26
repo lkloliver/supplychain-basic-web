@@ -8,24 +8,13 @@
     :detailFields="detailFields"
     :onSubmit="handleSubmit"
     :onAIRecognize="handleRecognize"
-    :customComponents="customComponents"
   />
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
 import { mockTransportContractRecognition } from '@/mocks/contract/transport';
-import TransportDetailsTable from '@/components/detail-components/TransportDetailsTable.vue';
-import TransportDetailsInput from '@/components/upload-components/TransportDetailsInput.vue';
-
-const router = useRouter();
-
-const customComponents = {
-  'transport-details-table': TransportDetailsTable,
-  'transport-details-input': TransportDetailsInput
-};
 
 // 详情字段配置
 const detailFields = [

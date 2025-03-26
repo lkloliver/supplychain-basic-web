@@ -24,7 +24,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
-import GoodsTable from '@/components/detail-components/GoodsTable.vue';
+import DetailsTable from '@/components/detail-components/DetailsTable.vue';
 import { fetchPurchaseContracts, deletePurchaseContract } from '@/mocks/contract/purchase';
 
 // 状态
@@ -64,25 +64,23 @@ const detailGroups = [
     ]
   },
   {
-    key: 'goods',
-    label: '货物信息',
-    component: 'goods-table',
-    props: {
-      columns: [
-        { key: 'name', label: '货物名称' },
-        { key: 'quantity', label: '货物数量' },
-        { key: 'price', label: '货物价格' },
-        { key: 'specification', label: '规格型号' }
-      ],
-      showFooter: true,
-      showActions: true
-    }
+    title: '货物信息',
+    customComponent: 'details-table',
+    dataKey: 'goods',
+    columns: [
+      { key: 'name', label: '货物名称', width: '25%' },
+      { key: 'quantity', label: '货物数量', width: '20%' },
+      { key: 'price', label: '货物价格', width: '20%', formatter: formatCurrency },
+      { key: 'specification', label: '规格型号', width: '25%' }
+    ],
+    showActions: false,
+    showFooter: true
   }
 ];
 
 // 注册自定义组件
 const customDetailComponents = {
-  'goods-table': GoodsTable
+  'details-table': DetailsTable
 };
 
 // 格式化货币

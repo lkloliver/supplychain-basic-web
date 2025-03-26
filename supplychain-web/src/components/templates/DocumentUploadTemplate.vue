@@ -1,6 +1,7 @@
 <template>
   <div class="operation-wrapper">
     <div class="operation-header">
+      <!-- 返回按钮 -->
       <div class="header-left">
         <router-link :to="{ name: backRouteName }" class="back-button">
           <ArrowLeftIcon class="back-icon" />
@@ -8,7 +9,7 @@
         </router-link>
         <h2 class="operation-title">{{ title }}</h2>
       </div>
-      
+      <!-- 模块视图切换 -->
       <div class="header-right">
         <ModuleViewToggle 
           :uploadRoute="uploadRouteName" 
@@ -16,396 +17,200 @@
         />
       </div>
     </div>
-    
+
+    <!-- 步骤条 -->
+    <div class="steps">
+      <div 
+        v-for="(step, index) in steps" 
+        :key="index"
+        :class="['step', { active: currentStep >= index }]"
+        @click="goToStep(index)"
+      >
+        <div class="step-number">{{ index + 1 }}</div>
+        <div class="step-title">{{ step.title }}</div>
+      </div>
+    </div>
+
     <div class="operation-content">
-      <form @submit.prevent="handleSubmit" class="upload-form">
-        <div class="form-card">
-          <h3 class="form-card-title">基本信息</h3>
-          
+      <!-- 文件上传表单 -->
+      <div v-show="currentStep === 0" class="form-card">
+        <form @submit.prevent="handleSubmit" class="upload-form">
           <div class="form-group">
-            <label for="doc-name" class="form-label">资料名称</label>
+            <label class="form-label">文件名称</label>
             <input 
-              type="text" 
-              id="doc-name" 
               v-model="formData.name" 
-              class="form-input" 
-              placeholder="请输入资料名称" 
-              required
+              type="text" 
+              placeholder="请输入文件名称"
+              class="form-input"
             />
           </div>
-          
+
           <div class="form-group">
-            <label class="form-label">资料文件</label>
-            <div class="file-upload-box">
+            <label class="form-label">上传文件</label>
+            <div class="file-upload">
               <input 
                 type="file" 
-                id="doc-file" 
-                @change="handleFileChange" 
-                class="file-input" 
+                ref="fileInput"
+                @change="handleFileChange"
+                class="file-input"
+                accept=".pdf,.doc,.docx"
               />
-              <label for="doc-file" class="file-upload-label">
+              <div class="upload-area" @click="triggerFileInput">
                 <UploadCloudIcon class="upload-icon" />
-                <span>{{ formData.file ? formData.file.name : '点击上传文件' }}</span>
-              </label>
+                <p class="upload-text">点击或拖拽文件到此处上传</p>
+                <p class="upload-tip">支持 PDF、Word 格式</p>
+              </div>
+            </div>
+            <div v-if="formData.file" class="file-info">
+              <FileIcon class="file-icon" />
+              <span class="file-name">{{ formData.file.name }}</span>
+              <button type="button" class="remove-file" @click="removeFile">
+                <XIcon class="remove-icon" />
+              </button>
             </div>
           </div>
-        </div>
-        
-        <div class="form-card">
-          <h3 class="form-card-title">{{ detailsTitle }}</h3>
-          
-          <div class="form-grid">
-            <template v-for="(field, index) in detailFields" :key="index">
-              <div class="form-group" v-if="field.type !== 'textarea' && field.type !== 'array' && !field.customComponent">
-                <label :for="`field-${field.key}`" class="form-label">{{ field.label }}</label>
-                
-                <input 
-                  v-if="field.type === 'text' || field.type === 'number' || field.type === 'date'"
-                  :type="field.type" 
-                  :id="`field-${field.key}`" 
-                  v-model="formData.details[field.key]" 
-                  class="form-input" 
-                  :placeholder="field.placeholder || `请输入${field.label}`" 
-                />
-                
-                <select 
-                  v-else-if="field.type === 'select'"
-                  :id="`field-${field.key}`" 
-                  v-model="formData.details[field.key]"
-                  class="form-select"
-                >
-                  <option 
-                    v-for="(option, optIndex) in field.options" 
-                    :key="optIndex" 
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
-              </div>
-            </template>
+
+          <div class="form-actions">
+            <button type="submit" class="action-btn primary">
+              <UploadCloudIcon class="btn-icon" />
+              上传文件
+            </button>
           </div>
-          
-          <template v-for="(field, index) in detailFields" :key="`file-${index}`">
-            <div class="form-group" v-if="field.type === 'file'">
-              <label :for="`field-${field.key}`" class="form-label">{{ field.label }}</label>
-              <div class="file-upload-box">
-                <input 
-                  type="file" 
-                  :id="`field-${field.key}`" 
-                  :accept="field.accept"
-                  @change="e => handleDetailFileChange(e, field.key)" 
-                  class="file-input" 
-                />
-                <label :for="`field-${field.key}`" class="file-upload-label">
-                  <UploadCloudIcon class="upload-icon" />
-                  <span>{{ getDetailFileName(field.key) || field.placeholder || '点击上传文件' }}</span>
-                </label>
-              </div>
-            </div>
-          </template>
-          
-          <template v-for="(field, index) in detailFields" :key="`textarea-${index}`">
-            <div class="form-group" v-if="field.type === 'textarea'">
-              <label :for="`field-${field.key}`" class="form-label">{{ field.label }}</label>
-              <textarea 
-                :id="`field-${field.key}`" 
-                v-model="formData.details[field.key]" 
-                class="form-textarea" 
-                :placeholder="field.placeholder || `请输入${field.label}`"
-                :rows="field.rows || 3"
-              ></textarea>
-            </div>
-          </template>
-          
-          <!-- 多组数据输入 -->
-          <template v-for="(field, index) in detailFields" :key="`array-${index}`">
-            <div class="form-group form-array-group" v-if="field.type === 'array'">
-              <div class="array-header">
-                <label class="form-label">{{ field.label }}</label>
-                <button 
-                  type="button" 
-                  class="add-item-btn"
-                  @click="addArrayItem(field.key, field.itemTemplate)"
-                >
-                  <PlusIcon class="btn-icon" />
-                  添加{{ field.itemLabel || '项目' }}
-                </button>
-              </div>
-              
-              <div class="array-items">
-                <div 
-                  v-for="(item, itemIndex) in getArrayItems(field.key)" 
-                  :key="`${field.key}-${itemIndex}`"
-                  class="array-item"
-                >
-                  <div class="array-item-header">
-                    <span class="array-item-title">{{ field.itemLabel || '项目' }} #{{ itemIndex + 1 }}</span>
-                    <button 
-                      type="button" 
-                      class="remove-item-btn"
-                      @click="removeArrayItem(field.key, itemIndex)"
-                    >
-                      <XIcon class="btn-icon" />
-                    </button>
-                  </div>
-                  
-                  <div class="array-item-content">
-                    <div class="form-grid">
-                      <template v-for="(subField, subIndex) in field.fields" :key="`${field.key}-${itemIndex}-${subIndex}`">
-                        <div class="form-group">
-                          <label :for="`${field.key}-${itemIndex}-${subField.key}`" class="form-label">
-                            {{ subField.label }}
-                          </label>
-                          
-                          <input 
-                            v-if="subField.type === 'text' || subField.type === 'number' || subField.type === 'date'"
-                            :type="subField.type" 
-                            :id="`${field.key}-${itemIndex}-${subField.key}`" 
-                            v-model="getArrayItems(field.key)[itemIndex][subField.key]" 
-                            class="form-input" 
-                            :placeholder="subField.placeholder || `请输入${subField.label}`" 
-                          />
-                          
-                          <select 
-                            v-else-if="subField.type === 'select'"
-                            :id="`${field.key}-${itemIndex}-${subField.key}`" 
-                            v-model="getArrayItems(field.key)[itemIndex][subField.key]"
-                            class="form-select"
-                          >
-                            <option 
-                              v-for="(option, optIndex) in subField.options" 
-                              :key="optIndex" 
-                              :value="option.value"
-                            >
-                              {{ option.label }}
-                            </option>
-                          </select>
-                          
-                          <textarea 
-                            v-else-if="subField.type === 'textarea'"
-                            :id="`${field.key}-${itemIndex}-${subField.key}`" 
-                            v-model="getArrayItems(field.key)[itemIndex][subField.key]" 
-                            class="form-textarea" 
-                            :placeholder="subField.placeholder || `请输入${subField.label}`"
-                            :rows="subField.rows || 3"
-                          ></textarea>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-                </div>
-                
-                <div v-if="getArrayItems(field.key).length === 0" class="empty-array-message">
-                  暂无{{ field.itemLabel || '项目' }}，请点击上方按钮添加
-                </div>
-              </div>
-            </div>
-          </template>
-          
-          <!-- 自定义组件 -->
-          <template v-for="(field, index) in detailFields" :key="`custom-${index}`">
-            <div class="form-group" v-if="field.customComponent && customComponents[field.customComponent]">
-              <label class="form-label">{{ field.label }}</label>
-              <component 
-                :is="customComponents[field.customComponent]"
-                v-bind="field.props || {}"
-                :value="formData.details[field.key]"
-                @input="value => updateCustomComponentValue(field.key, value)"
-              />
-            </div>
-          </template>
-        </div>
-        
-        <!-- 添加新的插槽 -->
-        <slot name="after-details"></slot>
-        
-        <div class="form-actions">
-          <button type="button" class="action-btn secondary" @click="handleAIRecognize">
-            <ZapIcon class="btn-icon" />
-            AI自动识别
-          </button>
-          <button type="submit" class="action-btn primary">提交</button>
-        </div>
-      </form>
+        </form>
+      </div>
+
+      <!-- 详情信息 -->
+      <div v-show="currentStep === 1" class="form-card">
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 import { 
   ArrowLeftIcon, 
   UploadCloudIcon, 
-  ZapIcon,
-  PlusIcon,
-  XIcon
+  FileIcon, 
+  XIcon,
+  SparklesIcon 
 } from 'lucide-vue-next';
 import ModuleViewToggle from '@/components/ModuleViewToggle.vue';
+import '@/assets/styles/form.css';
 
-const props = defineProps({
-  title: {
-    type: String,
-    required: true
-  },
-  detailsTitle: {
-    type: String,
-    default: '资料详情'
-  },
-  backRouteName: {
-    type: String,
-    required: true
-  },
-  uploadRouteName: {
-    type: String,
-    required: true
-  },
-  manageRouteName: {
-    type: String,
-    required: true
-  },
-  detailFields: {
-    type: Array,
-    required: true
-  },
-  initialDetails: {
-    type: Object,
-    default: () => ({})
-  },
-  onSubmit: {
-    type: Function,
-    required: true
-  },
-  onAIRecognize: {
-    type: Function,
-    default: null
-  },
-  customComponents: {
-    type: Object,
-    default: () => ({})
-  }
-});
+const props = defineProps<{
+  title: string;
+  backRouteName: string;
+  uploadRouteName: string;
+  manageRouteName: string;
+  onSubmit: (formData: { name: string; file: File }) => Promise<any>;
+}>();
 
-const router = useRouter();
+const emit = defineEmits<{
+  (e: 'upload-success', result: any): void;
+  (e: 'ai-auto-fill'): void;
+  (e: 'cancel-upload'): void;
+}>();
 
-// 表单数据
-const formData = reactive({
+const fileInput = ref<HTMLInputElement | null>(null);
+const currentStep = ref(0);
+
+// 步骤配置
+const steps = [
+  { title: '基本信息' },
+  { title: '详情信息' }
+];
+
+const formData = ref({
   name: '',
-  file: null,
-  details: { ...props.initialDetails }
+  file: null as File | null
 });
 
-// 初始化数组字段
-onMounted(() => {
-  props.detailFields.forEach(field => {
-    if (field.type === 'array' && !formData.details[field.key]) {
-      formData.details[field.key] = [];
-    }
-  });
-});
+// 触发文件选择
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
 
 // 处理文件选择
-const handleFileChange = (event) => {
-  const input = event.target;
-  if (input.files && input.files.length > 0) {
-    formData.file = input.files[0];
+const handleFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files[0]) {
+    formData.value.file = input.files[0];
   }
 };
 
-// 获取数组字段的项目
-const getArrayItems = (key) => {
-  if (!formData.details[key]) {
-    formData.details[key] = [];
-  }
-  return formData.details[key];
-};
-
-// 添加数组项目
-const addArrayItem = (key, template = {}) => {
-  if (!formData.details[key]) {
-    formData.details[key] = [];
-  }
-  formData.details[key].push({...template});
-};
-
-// 删除数组项目
-const removeArrayItem = (key, index) => {
-  if (formData.details[key] && index >= 0 && index < formData.details[key].length) {
-    formData.details[key].splice(index, 1);
+// 移除文件
+const removeFile = () => {
+  formData.value.file = null;
+  if (fileInput.value) {
+    fileInput.value.value = '';
   }
 };
 
-// 更新自定义组件的值
-const updateCustomComponentValue = (key, value) => {
-  formData.details[key] = value;
-};
-
-// AI自动识别文档
-const handleAIRecognize = async () => {
-  if (!formData.file) {
-    alert('请先上传文件');
-    return;
-  }
-
-  if (props.onAIRecognize) {
-    const recognizedData = await props.onAIRecognize(formData.file);
-    if (recognizedData) {
-      // 合并识别的数据到表单数据
-      Object.keys(recognizedData).forEach(key => {
-        // 处理数组类型的字段
-        if (Array.isArray(recognizedData[key])) {
-          formData.details[key] = [...recognizedData[key]];
-        } else {
-          formData.details[key] = recognizedData[key];
-        }
-      });
-    }
-  } else {
-    // 默认的AI识别行为
-    alert('正在识别文档...');
-    
-    // 模拟识别过程
-    setTimeout(() => {
-      alert('文档识别完成');
-    }, 1500);
-  }
-};
-
-// 处理详情文件上传
-const handleDetailFileChange = (event, key) => {
-  const input = event.target;
-  if (input.files && input.files.length > 0) {
-    formData.details[key] = input.files[0];
-  }
-};
-
-// 获取详情文件名
-const getDetailFileName = (key) => {
-  const file = formData.details[key];
-  return file ? file.name : '';
-};
-
-// 提交表单
+// 处理表单提交
 const handleSubmit = async () => {
-  if (!formData.name) {
-    alert('请输入资料名称');
+  if (!formData.value.name) {
+    alert('请输入文件名称');
     return;
   }
-
-  if (!formData.file) {
-    alert('请上传文件');
+  if (!formData.value.file) {
+    alert('请选择要上传的文件');
     return;
   }
 
   try {
-    await props.onSubmit(formData);
-    // 提交成功后的操作由调用组件处理
+    const result = await props.onSubmit({
+      name: formData.value.name,
+      file: formData.value.file
+    });
+    emit('upload-success', result);
+    nextStep();
   } catch (error) {
-    console.error('提交失败', error);
-    alert('提交失败: ' + error.message);
+    console.error('上传失败：', error);
   }
 };
+
+// 下一步
+const nextStep = () => {
+  if (currentStep.value < steps.length - 1) {
+    currentStep.value++;
+  }
+}
+
+// 上一步
+const prevStep = () => {
+  if (currentStep.value > 0) {
+    currentStep.value--;
+  }
+}
+
+// AI自动识别
+const handleAIAutoFill = async () => {
+  try {
+    emit('ai-auto-fill');
+  } catch (error) {
+    console.error('AI识别失败：', error);
+  }
+};
+
+// 跳转到指定步骤
+const goToStep = (index: number) => {
+  // 如果是从详情信息返回到基本信息，触发取消上传事件
+  if (index === 0 && currentStep.value === 1) {
+    emit('cancel-upload');
+  }
+  // 只允许向前跳转，不允许向后跳转
+  if (index <= currentStep.value) {
+    currentStep.value = index;
+  }
+}
+
+// 暴露方法给父组件
+defineExpose({
+  nextStep,
+  prevStep
+});
 </script>
 
 <style scoped>
@@ -450,8 +255,85 @@ const handleSubmit = async () => {
   margin: 0;
 }
 
+/* 步骤条样式 */
+.steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  padding: 0 20px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background-color: #ddd;
+  z-index: 1;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 2px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #999;
+  position: relative;
+  z-index: 2;
+}
+
+.step.active .step-number {
+  background-color: #1e88e5;
+  border-color: #1e88e5;
+  color: #fff;
+}
+
+.step-title {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.step.active .step-title {
+  color: #1e88e5;
+  font-weight: 500;
+}
+
+.step:hover .step-number {
+  border-color: #1e88e5;
+}
+
+.step:hover .step-title {
+  color: #1e88e5;
+}
+
 .operation-content {
   margin-top: 24px;
+}
+
+.form-card {
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 24px;
 }
 
 .upload-form {
@@ -460,147 +342,72 @@ const handleSubmit = async () => {
   gap: 24px;
 }
 
-.form-card {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.form-card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-top: 0;
-  margin-bottom: 16px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-array-group {
-  margin-top: 24px;
-  border-top: 1px solid #eee;
-  padding-top: 16px;
-}
-
-.form-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: #555;
-  margin-bottom: 8px;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #333;
-}
-
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-  outline: none;
-  border-color: #1e88e5;
-}
-
-.file-upload-box {
+.file-upload {
   position: relative;
 }
 
 .file-input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
+  display: none;
 }
 
-.file-upload-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border: 1px dashed #ddd;
-  border-radius: 4px;
+.upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.file-upload-label:hover {
+.upload-area:hover {
   border-color: #1e88e5;
 }
 
 .upload-icon {
-  width: 20px;
-  height: 20px;
-  color: #1e88e5;
-}
-
-.array-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  width: 48px;
+  height: 48px;
+  color: #999;
   margin-bottom: 16px;
 }
 
-.add-item-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s;
+.upload-text {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 8px;
 }
 
-.add-item-btn:hover {
-  background-color: #e0e0e0;
-}
-
-.array-items {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.array-item {
-  border: 1px solid #eee;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.array-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #f9f9f9;
-  border-bottom: 1px solid #eee;
-}
-
-.array-item-title {
+.upload-tip {
   font-size: 14px;
-  font-weight: 500;
-  color: #333;
+  color: #999;
+  margin: 0;
 }
 
-.remove-item-btn {
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.file-icon {
+  width: 20px;
+  height: 20px;
+  color: #666;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove-file {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -614,29 +421,20 @@ const handleSubmit = async () => {
   transition: all 0.2s;
 }
 
-.remove-item-btn:hover {
-  background-color: #f1f1f1;
+.remove-file:hover {
+  background-color: #e0e0e0;
   color: #d32f2f;
 }
 
-.array-item-content {
-  padding: 16px;
-}
-
-.empty-array-message {
-  padding: 16px;
-  text-align: center;
-  color: #999;
-  font-size: 14px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+.remove-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 8px;
 }
 
 .action-btn {
@@ -661,18 +459,19 @@ const handleSubmit = async () => {
   background-color: #1976d2;
 }
 
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .secondary {
   background-color: #f5f5f5;
   color: #333;
+  border: 1px solid #ddd;
 }
 
 .secondary:hover {
   background-color: #e0e0e0;
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
 }
 </style>
   

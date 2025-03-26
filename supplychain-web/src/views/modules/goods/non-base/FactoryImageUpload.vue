@@ -1,117 +1,149 @@
 <template>
-  <DocumentUploadTemplate
-    title="厂家影像上传"
-    detailsTitle="影像详情"
-    backRouteName="DashboardHome"
-    uploadRouteName="/dashboard/goods/non-base/factory-image/upload"
-    manageRouteName="/dashboard/goods/non-base/factory-image/manage"
-    :detailFields="detailFields"
-    :onSubmit="handleSubmit"
-    :onAIRecognize="handleRecognize"
-  />
+  <div class="contract-upload">
+    <DocumentUploadTemplate
+      title="到货厂家图片上传"
+      backRouteName="DashboardHome"
+      uploadRouteName="/dashboard/goods/non-base/factory-image/upload"
+      manageRouteName="/dashboard/goods/non-base/factory-image/manage"
+      :onSubmit="handleFileUpload"
+      @upload-success="handleUploadSuccess"
+      @cancel-upload="handleCancelUpload"
+      ref="templateRef"
+    >
+      <!-- 详情信息表单 -->
+      <form @submit.prevent="handleDetailSubmit" class="form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">车牌号</label>
+            <input 
+              v-model="detailForm.vehicleNo" 
+              type="text" 
+              placeholder="请输入车牌号"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">司机姓名</label>
+            <input 
+              v-model="detailForm.driverName" 
+              type="text" 
+              placeholder="请输入司机姓名"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">司机电话</label>
+            <input 
+              v-model="detailForm.driverPhone" 
+              type="tel" 
+              placeholder="请输入司机电话"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">司机身份证号</label>
+            <input 
+              v-model="detailForm.driverIdCard" 
+              type="text" 
+              placeholder="请输入司机身份证号"
+              class="form-input"
+            />
+          </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="form-actions">
+          <button type="button" class="action-btn secondary" @click="handleAIAutoFill">
+            <SparklesIcon class="btn-icon" />
+            AI自动识别
+          </button>
+          <button type="submit" class="action-btn primary">
+            提交详情信息
+          </button>
+        </div>
+      </form>
+    </DocumentUploadTemplate>
+  </div>
 </template>
 
-<script lang="ts" setup>
-import { useRouter } from 'vue-router';
+<script setup lang="ts">
+import { ref } from 'vue';
+import { SparklesIcon } from 'lucide-vue-next';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
+import '@/assets/styles/form.css';
 
-const router = useRouter();
+interface DetailForm {
+  vehicleNo: string;
+  driverName: string;
+  driverPhone: string;
+  driverIdCard: string;
+}
 
-const detailFields = [
-  {
-    key: 'imageNo',
-    label: '影像编号',
-    type: 'text',
-    placeholder: '请输入影像编号'
-  },
-  {
-    key: 'contractNo',
-    label: '合同编号',
-    type: 'text',
-    placeholder: '请输入合同编号'
-  },
-  {
-    key: 'waybillNo',
-    label: '运单编号',
-    type: 'text',
-    placeholder: '请输入运单编号'
-  },
-  {
-    key: 'imageType',
-    label: '影像类型',
-    type: 'select',
-    options: [
-      { value: 'factory', label: '厂家照片' },
-      { value: 'goods', label: '货物照片' },
-      { value: 'weighing', label: '过磅照片' },
-      { value: 'quality', label: '质检照片' },
-      { value: 'other', label: '其他照片' }
-    ]
-  },
-  {
-    key: 'shootTime',
-    label: '拍摄时间',
-    type: 'datetime'
-  },
-  {
-    key: 'location',
-    label: '拍摄地点',
-    type: 'text',
-    placeholder: '请输入拍摄地点'
-  },
-  {
-    key: 'photographer',
-    label: '拍摄人员',
-    type: 'text',
-    placeholder: '请输入拍摄人员姓名'
-  },
-  {
-    key: 'deviceNo',
-    label: '设备编号',
-    type: 'text',
-    placeholder: '请输入拍摄设备编号'
-  },
-  {
-    key: 'remark',
-    label: '备注',
-    type: 'textarea',
-    placeholder: '请输入备注信息',
-    rows: 3
-  }
-];
+// 表单数据
+const detailForm = ref<DetailForm>({
+  vehicleNo: '',
+  driverName: '',
+  driverPhone: '',
+  driverIdCard: ''
+});
 
-const handleRecognize = async (file: File) => {
-  console.log('正在识别文档...', file.name);
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const result = {
-        imageNo: 'FI-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        contractNo: 'SC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        waybillNo: 'SW-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        imageType: 'factory',
-        shootTime: new Date().toISOString(),
-        location: '厂家现场',
-        photographer: '自动识别拍摄员',
-        deviceNo: 'CAM-' + Math.floor(Math.random() * 100).toString().padStart(3, '0'),
-        remark: '自动识别备注'
-      };
-      
-      alert('文档识别完成');
-      resolve(result);
-    }, 1500);
-  });
-};
+// 处理文件上传
+const handleFileUpload = async (formData: {name: string, file: File}) => {
+  const uploadData = new FormData();
+  uploadData.append('name', formData.name);
+  uploadData.append('file', formData.file);
+  uploadData.append('fileType', 'factory_image');
 
-const handleSubmit = async (formData: { name: string, file: File, details: Record<string, any> }) => {
   try {
-    console.log('提交厂家影像数据', formData);
+    // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 1000));
-    alert('上传成功');
-    router.push('/dashboard/goods/non-base/factory-image/manage');
-  } catch (error: any) {
-    console.error('上传失败:', error);
-    alert('上传失败: ' + error.message);
+    const result = { 
+      success: true, 
+      fileId: 'mock_file_' + Date.now(),
+      data: {
+        name: formData.name,
+        fileType: 'factory_image'
+      }
+    };
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 处理上传成功
+const handleUploadSuccess = (result: any) => {
+  if (result.success && result.fileId) {
+    // 文件上传成功后，模板组件会自动切换到下一步
+  }
+}
+
+// 处理取消上传
+const handleCancelUpload = async () => {
+  // TODO: 调用删除接口
+  console.log('取消上传');
+}
+
+// AI自动识别
+const handleAIAutoFill = async () => {
+  try {
+    // TODO: 调用AI识别接口
+    console.log('开始AI自动识别...');
+  } catch (error) {
+    console.error('AI识别失败：', error);
+  }
+}
+
+// 提交详情信息
+const handleDetailSubmit = async () => {
+  try {
+    // TODO: 调用API保存详情信息
+    console.log('提交详情信息：', detailForm.value);
+  } catch (error) {
+    console.error('提交详情信息失败：', error);
   }
 };
 </script>

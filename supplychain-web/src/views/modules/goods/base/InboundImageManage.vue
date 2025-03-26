@@ -35,41 +35,6 @@ const statusFilter = ref('');
 const currentPage = ref(1);
 const totalPages = ref(5);
 
-// 定义表格列
-const columns = [
-  {
-    key: 'imageNo',
-    label: '影像编号'
-  },
-  {
-    key: 'weightNo',
-    label: '过磅单号'
-  },
-  {
-    key: 'imageType',
-    label: '影像类型',
-    format: (value: string) => getImageTypeText(value)
-  },
-  {
-    key: 'shootTime',
-    label: '拍摄时间'
-  },
-  {
-    key: 'location',
-    label: '拍摄地点'
-  },
-  {
-    key: 'photographer',
-    label: '拍摄人员'
-  },
-  {
-    key: 'status',
-    label: '状态',
-    format: (value: string) => getStatusText(value),
-    class: (value: string) => `status-badge ${value}`
-  }
-];
-
 // 模拟数据
 const documents = ref([
   {

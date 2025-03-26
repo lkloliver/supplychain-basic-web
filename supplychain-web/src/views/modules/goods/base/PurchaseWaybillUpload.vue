@@ -1,149 +1,199 @@
 <template>
-  <DocumentUploadTemplate
-    title="采购运单上传"
-    detailsTitle="运单详情"
-    backRouteName="DashboardHome"
-    uploadRouteName="/dashboard/goods/base/purchase-waybill/upload"
-    manageRouteName="/dashboard/goods/base/purchase-waybill/manage"
-    :detailFields="detailFields"
-    @submit="handleSubmit"
-    @recognize="handleRecognize"
-  />
+  <div class="contract-upload">
+    <DocumentUploadTemplate
+      title="采购运单上传"
+      backRouteName="DashboardHome"
+      uploadRouteName="/dashboard/goods/base/purchase-waybill/upload"
+      manageRouteName="/dashboard/goods/base/purchase-waybill/manage"
+      :onSubmit="handleFileUpload"
+      @upload-success="handleUploadSuccess"
+      @cancel-upload="handleCancelUpload"
+      ref="templateRef"
+    >
+      <!-- 详情信息表单 -->
+      <form @submit.prevent="handleDetailSubmit" class="form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">运单号</label>
+            <input 
+              v-model="detailForm.waybillNo" 
+              type="text" 
+              placeholder="请输入运单号"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">起运地</label>
+            <input 
+              v-model="detailForm.origin" 
+              type="text" 
+              placeholder="请输入起运地"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">目的地</label>
+            <input 
+              v-model="detailForm.destination" 
+              type="text" 
+              placeholder="请输入目的地"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">品名/种类</label>
+            <input 
+              v-model="detailForm.productName" 
+              type="text" 
+              placeholder="请输入品名或种类"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">运输重量(kg)</label>
+            <input 
+              v-model="detailForm.transportWeight" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入运输重量"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">承运者</label>
+            <input 
+              v-model="detailForm.carrier" 
+              type="text" 
+              placeholder="请输入承运者"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">运输方式</label>
+            <select v-model="detailForm.transportMethod" class="form-input">
+              <option value="">请选择运输方式</option>
+              <option value="truck">公路运输</option>
+              <option value="railway">铁路运输</option>
+              <option value="waterway">水路运输</option>
+              <option value="air">航空运输</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">运单日期</label>
+            <input 
+              v-model="detailForm.waybillDate" 
+              type="date" 
+              class="form-input"
+            />
+          </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="form-actions">
+          <button type="button" class="action-btn secondary" @click="handleAIAutoFill">
+            <SparklesIcon class="btn-icon" />
+            AI自动识别
+          </button>
+          <button type="submit" class="action-btn primary">
+            提交详情信息
+          </button>
+        </div>
+      </form>
+    </DocumentUploadTemplate>
+  </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { SparklesIcon } from 'lucide-vue-next';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
+import '@/assets/styles/form.css';
 
-const router = useRouter();
+interface DetailForm {
+  waybillNo: string;
+  origin: string;
+  destination: string;
+  productName: string;
+  transportWeight: number;
+  carrier: string;
+  transportMethod: string;
+  waybillDate: string;
+}
 
-// 定义表单字段
-const detailFields = [
-  {
-    key: 'waybillNo',
-    label: '运单编号',
-    type: 'text',
-    placeholder: '请输入运单编号'
-  },
-  {
-    key: 'contractNo',
-    label: '合同编号',
-    type: 'text',
-    placeholder: '请输入合同编号'
-  },
-  {
-    key: 'weightNo',
-    label: '过磅单号',
-    type: 'text',
-    placeholder: '请输入过磅单号'
-  },
-  {
-    key: 'vehicleNo',
-    label: '车牌号',
-    type: 'text',
-    placeholder: '请输入车牌号'
-  },
-  {
-    key: 'driver',
-    label: '司机姓名',
-    type: 'text',
-    placeholder: '请输入司机姓名'
-  },
-  {
-    key: 'driverPhone',
-    label: '司机电话',
-    type: 'text',
-    placeholder: '请输入司机电话'
-  },
-  {
-    key: 'supplier',
-    label: '供应商',
-    type: 'text',
-    placeholder: '请输入供应商'
-  },
-  {
-    key: 'loadingPlace',
-    label: '装货地点',
-    type: 'text',
-    placeholder: '请输入装货地点'
-  },
-  {
-    key: 'unloadingPlace',
-    label: '卸货地点',
-    type: 'text',
-    placeholder: '请输入卸货地点'
-  },
-  {
-    key: 'loadingTime',
-    label: '装货时间',
-    type: 'datetime'
-  },
-  {
-    key: 'unloadingTime',
-    label: '卸货时间',
-    type: 'datetime'
-  },
-  {
-    key: 'freightRate',
-    label: '运费单价',
-    type: 'number',
-    placeholder: '请输入运费单价'
-  },
-  {
-    key: 'freightAmount',
-    label: '运费总额',
-    type: 'number',
-    placeholder: '请输入运费总额'
-  },
-  {
-    key: 'remark',
-    label: '备注',
-    type: 'textarea',
-    placeholder: '请输入备注信息',
-    rows: 3
+// 表单数据
+const detailForm = ref<DetailForm>({
+  waybillNo: '',
+  origin: '',
+  destination: '',
+  productName: '',
+  transportWeight: 0,
+  carrier: '',
+  transportMethod: '',
+  waybillDate: ''
+});
+
+// 处理文件上传
+const handleFileUpload = async (formData: {name: string, file: File}) => {
+  const uploadData = new FormData();
+  uploadData.append('name', formData.name);
+  uploadData.append('file', formData.file);
+  uploadData.append('fileType', 'purchase_waybill');
+
+  try {
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = { 
+      success: true, 
+      fileId: 'mock_file_' + Date.now(),
+      data: {
+        name: formData.name,
+        fileType: 'purchase_waybill'
+      }
+    };
+    return result;
+  } catch (error) {
+    throw error;
   }
-];
+}
 
-// 处理AI识别
-const handleRecognize = async (file: File) => {
-  console.log('正在识别文档...', file.name);
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟识别结果
-      const result = {
-        waybillNo: 'PW-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        contractNo: 'PC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        weightNo: 'W-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        vehicleNo: '京A' + Math.floor(Math.random() * 10000).toString().padStart(5, '0'),
-        driver: '自动识别司机',
-        driverPhone: '13' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0'),
-        supplier: '自动识别供应商',
-        loadingPlace: '自动识别装货地',
-        unloadingPlace: '自动识别卸货地',
-        loadingTime: new Date().toISOString(),
-        unloadingTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        freightRate: Math.floor(Math.random() * 100 + 50),
-        freightAmount: Math.floor(Math.random() * 10000 + 5000),
-        remark: '自动识别备注'
-      };
-      
-      alert('文档识别完成');
-      resolve(result);
-    }, 1500);
-  });
-};
+// 处理上传成功
+const handleUploadSuccess = (result: any) => {
+  if (result.success && result.fileId) {
+    // 文件上传成功后，模板组件会自动切换到下一步
+  }
+}
 
-// 处理提交
-const handleSubmit = (formData: { name: string, file: File, details: Record<string, any> }) => {
-  console.log('提交采购运单数据', formData);
-  
-  // 模拟上传成功
-  alert('上传成功');
-  
-  // 上传成功后跳转到管理页面
-  router.push({ name: 'PurchaseWaybillManage' });
+// 处理取消上传
+const handleCancelUpload = async () => {
+  // TODO: 调用删除接口
+  console.log('取消上传');
+}
+
+// AI自动识别
+const handleAIAutoFill = async () => {
+  try {
+    // TODO: 调用AI识别接口
+    console.log('开始AI自动识别...');
+  } catch (error) {
+    console.error('AI识别失败：', error);
+  }
+}
+
+// 提交详情信息
+const handleDetailSubmit = async () => {
+  try {
+    // TODO: 调用API保存详情信息
+    console.log('提交详情信息：', detailForm.value);
+  } catch (error) {
+    console.error('提交详情信息失败：', error);
+  }
 };
 </script>
   

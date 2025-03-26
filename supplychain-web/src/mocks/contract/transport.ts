@@ -1,125 +1,156 @@
+// 定义运输合同接口
 export interface TransportContract {
   id: string;
-  contractNo: string;
-  carrier: string;  // 承运方信息
-  shipper: string;  // 托运方信息
-  startTime: string;  // 合同起始时间
-  endTime: string;  // 合同截止时间
-  signDate: string;  // 签订日期
-  handler: string;  // 经办人
-  transportMethod: string;  // 运输方式
-  transportDetails: {
-    startLocation: string;
-    endLocation: string;
-    category: string;
-    unitPrice: number;
-  }[];
-  status: 'active' | 'expired' | 'completed';
+  contractNo: string;          // 合同编号
+  carrier: string;            // 承运方名称
+  carrierContact: string;     // 承运方联系人
+  carrierPhone: string;       // 承运方联系电话
+  shipper: string;            // 托运方名称
+  shipperContact: string;     // 托运方联系人
+  shipperPhone: string;       // 托运方联系电话
+  startDate: string;          // 合同起始时间
+  endDate: string;            // 合同截止时间
+  transportMethod: string;     // 运输方式
+  signDate: string;           // 签订日期
+  handler: string;            // 经办人
+  transportDetails: TransportDetail[]; // 运输明细
 }
 
+// 运输明细接口
+export interface TransportDetail {
+  startLocation: string;      // 起运地
+  endLocation: string;        // 目的地
+  goodsCategory: string;      // 名称/品类
+  unitPrice: number;          // 含税运输单价
+}
+
+// 模拟数据
 export const mockTransportContracts: TransportContract[] = [
   {
-    id: '1',
-    contractNo: 'YS-2024-001',
-    carrier: '快达物流有限公司',
-    shipper: '某某贸易有限公司',
-    startTime: '2024-01-01',
-    endTime: '2024-12-31',
-    signDate: '2023-12-25',
-    handler: '张三',
-    transportMethod: '公路运输',
+    id: "TC001",
+    contractNo: "YS20240001",
+    carrier: "安达物流有限公司",
+    carrierContact: "李经理",
+    carrierPhone: "13900139000",
+    shipper: "上海贸易有限公司",
+    shipperContact: "张经理",
+    shipperPhone: "13800138000",
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    transportMethod: "公路运输",
+    signDate: "2023-12-25",
+    handler: "王助理",
     transportDetails: [
       {
-        startLocation: '上海仓库',
-        endLocation: '北京配送中心',
-        category: '普通货物',
-        unitPrice: 2500
+        startLocation: "上海市浦东新区",
+        endLocation: "北京市朝阳区",
+        goodsCategory: "电子产品",
+        unitPrice: 2500.00
       },
       {
-        startLocation: '广州仓库',
-        endLocation: '深圳配送中心',
-        category: '冷链货物',
-        unitPrice: 3500
+        startLocation: "上海市松江区",
+        endLocation: "天津市滨海新区",
+        goodsCategory: "机械设备",
+        unitPrice: 3000.00
       }
-    ],
-    status: 'active'
+    ]
   },
   {
-    id: '2',
-    contractNo: 'YS-2024-002',
-    carrier: '安达运输公司',
-    shipper: '某某制造有限公司',
-    startTime: '2024-02-01',
-    endTime: '2024-12-31',
-    signDate: '2024-01-15',
-    handler: '李四',
-    transportMethod: '铁路运输',
+    id: "TC002",
+    contractNo: "YS20240002",
+    carrier: "顺达物流有限公司",
+    carrierContact: "赵经理",
+    carrierPhone: "13700137000",
+    shipper: "广州制造有限公司",
+    shipperContact: "陈经理",
+    shipperPhone: "13600136000",
+    startDate: "2024-02-01",
+    endDate: "2024-07-31",
+    transportMethod: "铁路运输",
+    signDate: "2024-01-15",
+    handler: "刘助理",
     transportDetails: [
       {
-        startLocation: '武汉仓库',
-        endLocation: '成都配送中心',
-        category: '大宗货物',
-        unitPrice: 4200
+        startLocation: "广州市黄埔区",
+        endLocation: "武汉市江汉区",
+        goodsCategory: "家用电器",
+        unitPrice: 2000.00
       }
-    ],
-    status: 'active'
-  },
-  {
-    id: '3',
-    contractNo: 'TC-2023003',
-    carrier: '山东物流发展有限公司',
-    shipper: '某科技公司',
-    startTime: '2023-03-01',
-    endTime: '2023-06-30',
-    signDate: '2023-03-10',
-    handler: '王五',
-    transportMethod: '公路运输',
-    transportDetails: [
-      {
-        startLocation: '济南',
-        endLocation: '武汉',
-        category: '精密设备',
-        unitPrice: 4.2
-      }
-    ],
-    status: 'completed'
+    ]
   }
 ];
 
 // 模拟AI识别结果
 export const mockTransportContractRecognition = {
-  carrier: '某物流公司',
-  shipper: '我方公司',
-  startTime: '2023-07-01',
-  endTime: '2024-06-30',
-  signDate: '2023-06-25',
-  handler: '李四',
-  transportMethod: '公路运输',
+  contractNo: "YS20240003",
+  carrier: "快捷物流有限公司",
+  carrierContact: "吴经理",
+  carrierPhone: "13500135000",
+  shipper: "深圳科技有限公司",
+  shipperContact: "周经理",
+  shipperPhone: "13400134000",
+  startDate: "2024-03-01",
+  endDate: "2024-12-31",
+  transportMethod: "公路运输",
+  signDate: "2024-02-20",
+  handler: "孙助理",
   transportDetails: [
     {
-      startLocation: '深圳',
-      endLocation: '武汉',
-      category: '普通货物',
-      unitPrice: 2500
+      startLocation: "深圳市南山区",
+      endLocation: "上海市浦东新区",
+      goodsCategory: "电子元件",
+      unitPrice: 2800.00
     }
   ]
 };
 
-console.log('Mock data:', mockTransportContracts);
-
-export const fetchTransportContracts = async (page: number) => {
-  const response = {
-    data: mockTransportContracts,
+// API函数
+export async function fetchTransportContracts(page = 1, pageSize = 10) {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  return {
+    data: mockTransportContracts.slice(start, end),
     total: mockTransportContracts.length,
-    pageSize: 10,
-    success: true
+    page,
+    pageSize
   };
-  console.log('Fetched data:', response);
-  return response;
-};
+}
 
-// 模拟删除操作
-export const deleteTransportContract = async (id: string) => {
+export async function deleteTransportContract(id: string) {
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true };
-}; 
+}
+
+export async function createTransportContract(data: Partial<TransportContract>) {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return {
+    success: true,
+    data: {
+      ...data,
+      id: `TC${Date.now()}`,
+      createTime: new Date().toISOString()
+    }
+  };
+}
+
+export async function updateTransportContract(id: string, data: Partial<TransportContract>) {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return {
+    success: true,
+    data: {
+      ...data,
+      id,
+      updateTime: new Date().toISOString()
+    }
+  };
+}
+
+export async function getTransportContract(id: string) {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const contract = mockTransportContracts.find(c => c.id === id);
+  return {
+    success: true,
+    data: contract || mockTransportContracts[0]
+  };
+}

@@ -1,122 +1,189 @@
 <template>
-  <DocumentUploadTemplate
-    title="出库过磅上传"
-    detailsTitle="过磅详情"
-    backRouteName="DashboardHome"
-    uploadRouteName="/dashboard/goods/base/outbound-weight/upload"
-    manageRouteName="/dashboard/goods/base/outbound-weight/manage"
-    :detailFields="detailFields"
-    @submit="handleSubmit"
-    @recognize="handleRecognize"
-  />
+  <div class="contract-upload">
+    <DocumentUploadTemplate
+      title="出库过磅单上传"
+      backRouteName="DashboardHome"
+      uploadRouteName="/dashboard/goods/base/outbound-weight/upload"
+      manageRouteName="/dashboard/goods/base/outbound-weight/manage"
+      :onSubmit="handleFileUpload"
+      @upload-success="handleUploadSuccess"
+      @cancel-upload="handleCancelUpload"
+      ref="templateRef"
+    >
+      <!-- 详情信息表单 -->
+      <form @submit.prevent="handleDetailSubmit" class="form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">计量号</label>
+            <input 
+              v-model="detailForm.measurementNo" 
+              type="text" 
+              placeholder="请输入计量号"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">毛重(kg)</label>
+            <input 
+              v-model="detailForm.grossWeight" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入毛重"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">皮重(kg)</label>
+            <input 
+              v-model="detailForm.tareWeight" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入皮重"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">净重(kg)</label>
+            <input 
+              v-model="detailForm.netWeight" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入净重"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">放射性检测</label>
+            <select v-model="detailForm.radiationTest" class="form-input">
+              <option value="">请选择检测结果</option>
+              <option value="pass">合格</option>
+              <option value="fail">不合格</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">备注</label>
+            <textarea 
+              v-model="detailForm.remarks" 
+              placeholder="请输入备注信息"
+              class="form-input"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="form-actions">
+          <button type="button" class="action-btn secondary" @click="handleAIAutoFill">
+            <SparklesIcon class="btn-icon" />
+            AI自动识别
+          </button>
+          <button type="submit" class="action-btn primary">
+            提交详情信息
+          </button>
+        </div>
+      </form>
+    </DocumentUploadTemplate>
+  </div>
 </template>
 
-<script lang="ts" setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
+import { SparklesIcon } from 'lucide-vue-next';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
+import '@/assets/styles/form.css';
 
-const router = useRouter();
+interface DetailForm {
+  measurementNo: string;
+  grossWeight: number;
+  tareWeight: number;
+  netWeight: number;
+  radiationTest: string;
+  remarks: string;
+}
 
-// 定义表单字段
-const detailFields = [
-  {
-    key: 'weightNo',
-    label: '过磅单号',
-    type: 'text',
-    placeholder: '请输入过磅单号'
-  },
-  {
-    key: 'vehicleNo',
-    label: '车牌号',
-    type: 'text',
-    placeholder: '请输入车牌号'
-  },
-  {
-    key: 'contractNo',
-    label: '合同编号',
-    type: 'text',
-    placeholder: '请输入合同编号'
-  },
-  {
-    key: 'grossWeight',
-    label: '毛重(kg)',
-    type: 'number',
-    placeholder: '请输入毛重'
-  },
-  {
-    key: 'tareWeight',
-    label: '皮重(kg)',
-    type: 'number',
-    placeholder: '请输入皮重'
-  },
-  {
-    key: 'netWeight',
-    label: '净重(kg)',
-    type: 'number',
-    placeholder: '请输入净重'
-  },
-  {
-    key: 'weightTime',
-    label: '过磅时间',
-    type: 'datetime'
-  },
-  {
-    key: 'operator',
-    label: '操作员',
-    type: 'text',
-    placeholder: '请输入操作员'
-  },
-  {
-    key: 'destination',
-    label: '目的地',
-    type: 'text',
-    placeholder: '请输入目的地'
-  },
-  {
-    key: 'remark',
-    label: '备注',
-    type: 'textarea',
-    placeholder: '请输入备注信息',
-    rows: 3
+// 表单数据
+const detailForm = ref<DetailForm>({
+  measurementNo: '',
+  grossWeight: 0,
+  tareWeight: 0,
+  netWeight: 0,
+  radiationTest: '',
+  remarks: ''
+});
+
+// 自动计算净重
+const calculateNetWeight = computed(() => {
+  return detailForm.value.grossWeight - detailForm.value.tareWeight;
+});
+
+// 监听毛重和皮重的变化，自动更新净重
+watch(
+  [() => detailForm.value.grossWeight, () => detailForm.value.tareWeight],
+  () => {
+    detailForm.value.netWeight = calculateNetWeight.value;
   }
-];
+);
 
-// 处理AI识别
-const handleRecognize = async (file: File) => {
-  console.log('正在识别文档...', file.name);
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟识别结果
-      const result = {
-        weightNo: 'OW-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        vehicleNo: '京A' + Math.floor(Math.random() * 10000).toString().padStart(5, '0'),
-        contractNo: 'SC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        grossWeight: Math.floor(Math.random() * 50000 + 30000),
-        tareWeight: Math.floor(Math.random() * 10000 + 5000),
-        netWeight: Math.floor(Math.random() * 40000 + 20000),
-        weightTime: new Date().toISOString(),
-        operator: '自动识别操作员',
-        destination: '自动识别目的地',
-        remark: '自动识别备注'
-      };
-      
-      alert('文档识别完成');
-      resolve(result);
-    }, 1500);
-  });
-};
+// 处理文件上传
+const handleFileUpload = async (formData: {name: string, file: File}) => {
+  const uploadData = new FormData();
+  uploadData.append('name', formData.name);
+  uploadData.append('file', formData.file);
+  uploadData.append('fileType', 'outbound_weight');
 
-// 处理提交
-const handleSubmit = (formData: { name: string, file: File, details: Record<string, any> }) => {
-  console.log('提交出库过磅数据', formData);
-  
-  // 模拟上传成功
-  alert('上传成功');
-  
-  // 上传成功后跳转到管理页面
-  router.push({ name: 'OutboundWeightManage' });
+  try {
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = { 
+      success: true, 
+      fileId: 'mock_file_' + Date.now(),
+      data: {
+        name: formData.name,
+        fileType: 'outbound_weight'
+      }
+    };
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 处理上传成功
+const handleUploadSuccess = (result: any) => {
+  if (result.success && result.fileId) {
+    // 文件上传成功后，模板组件会自动切换到下一步
+  }
+}
+
+// 处理取消上传
+const handleCancelUpload = async () => {
+  // TODO: 调用删除接口
+  console.log('取消上传');
+}
+
+// AI自动识别
+const handleAIAutoFill = async () => {
+  try {
+    // TODO: 调用AI识别接口
+    console.log('开始AI自动识别...');
+  } catch (error) {
+    console.error('AI识别失败：', error);
+  }
+}
+
+// 提交详情信息
+const handleDetailSubmit = async () => {
+  try {
+    // TODO: 调用API保存详情信息
+    console.log('提交详情信息：', detailForm.value);
+  } catch (error) {
+    console.error('提交详情信息失败：', error);
+  }
 };
 </script>
     

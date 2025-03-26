@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
-import GoodsTable from '@/components/detail-components/GoodsTable.vue';
+import DetailsTable from '@/components/detail-components/DetailsTable.vue';
 import { fetchSalesContracts, deleteSalesContract, type SalesContract } from '@/mocks/contract/sales';
 
 // 状态
@@ -33,30 +33,6 @@ const currentPage = ref(1);
 const totalPages = ref(1);
 const pageSize = 10;
 
-// 表格列配置
-const tableColumns = [
-  { id: 'number', label: '合同编号', sortable: true },
-  { id: 'date', label: '签订日期', sortable: true },
-  { id: 'customer', label: '客户', sortable: true },
-  { id: 'product', label: '产品', sortable: false },
-  { id: 'quantity', label: '数量', sortable: true },
-  { id: 'unitPrice', label: '单价', sortable: true, formatter: (val) => `¥${val.toFixed(2)}` },
-  { id: 'totalAmount', label: '总金额', sortable: true, formatter: (val) => `¥${val.toFixed(2)}` },
-  { 
-    id: 'status', 
-    label: '状态', 
-    sortable: true,
-    formatter: (val) => {
-      const statusMap = {
-        'active': '有效',
-        'expired': '已过期',
-        'completed': '已完成'
-      };
-      return statusMap[val] || '未知';
-    },
-    cellClass: (val) => `status-${val}`
-  }
-];
 
 // 卡片主要显示列
 const cardMainColumns = [
@@ -90,7 +66,7 @@ const detailGroups = [
   },
   {
     title: '货物信息',
-    customComponent: 'goods-table',
+    customComponent: 'details-table',
     dataKey: 'goods',
     columns: [
       { key: 'name', label: '货物名称', width: '25%' },
@@ -105,7 +81,7 @@ const detailGroups = [
 
 // 注册自定义组件
 const customDetailComponents = {
-  'goods-table': GoodsTable
+  'details-table': DetailsTable
 };
 
 // 格式化货币

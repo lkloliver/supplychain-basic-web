@@ -1,37 +1,193 @@
 <template>
   <div class="contract-upload">
+    <!--文件上传-->
     <DocumentUploadTemplate
-      title="采购合同"
-      detailsTitle="合同详情"
+      title="采购合同上传"
       backRouteName="DashboardHome"
       uploadRouteName="/dashboard/contract/purchase/upload"
       manageRouteName="/dashboard/contract/purchase/manage"
-      :detailFields="detailFields"
-      :onSubmit="handleSubmit"
-      :onAIRecognize="handleAIRecognize"
-      :customComponents="customComponents"
+      :onSubmit="handleFileUpload"
+      @upload-success="handleUploadSuccess"
+      @cancel-upload="handleCancelUpload"
+      ref="templateRef"
     >
-      <!-- 添加反向开票同意书卡片 -->
-      <template #after-details>
-        <div class="form-card">
-          <h3 class="form-card-title">反向开票同意书</h3>
+      <!-- 详情信息表单 -->
+      <form @submit.prevent="handleDetailSubmit" class="form">
+        <div class="form-grid">
           <div class="form-group">
-            <div class="file-upload-box">
-              <input 
-                type="file" 
-                id="invoice-agreement" 
-                @change="handleInvoiceAgreementChange" 
-                accept=".pdf,.doc,.docx"
-                class="file-input" 
-              />
-              <label for="invoice-agreement" class="file-upload-label">
-                <UploadCloudIcon class="upload-icon" />
-                <span>{{ invoiceAgreementName || '请上传反向开票同意书' }}</span>
-              </label>
+            <label class="form-label">采购合同编号</label>
+            <input 
+              v-model="detailForm.contractNo" 
+              type="text" 
+              placeholder="请输入合同编号"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">签订时间</label>
+            <input 
+              v-model="detailForm.signDate" 
+              type="date" 
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">买方信息</label>
+            <input 
+              v-model="detailForm.buyer" 
+              type="text" 
+              placeholder="请输入买方信息"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">卖方信息</label>
+            <input 
+              v-model="detailForm.seller" 
+              type="text" 
+              placeholder="请输入卖方信息"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">付款账户</label>
+            <input 
+              v-model="detailForm.paymentAccount" 
+              type="text" 
+              placeholder="请输入付款账户"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">收款账户</label>
+            <input 
+              v-model="detailForm.receivingAccount" 
+              type="text" 
+              placeholder="请输入收款账户"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">税率</label>
+            <input 
+              v-model="detailForm.taxRate" 
+              type="number" 
+              placeholder="请输入税率(%)"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">发票类型</label>
+            <select v-model="detailForm.invoiceType" class="form-input">
+              <option value="">请选择发票类型</option>
+              <option value="special">增值税专用发票</option>
+              <option value="normal">增值税普通发票</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">付款时间</label>
+            <input 
+              v-model="detailForm.paymentDate" 
+              type="date" 
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">付款方式</label>
+            <select v-model="detailForm.paymentMethod" class="form-input">
+              <option value="">请选择付款方式</option>
+              <option value="cash">现金</option>
+              <option value="transfer">银行转账</option>
+              <option value="check">支票</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">合同金额</label>
+            <input 
+              v-model="detailForm.totalAmount" 
+              type="number" 
+              placeholder="请输入合同金额"
+              class="form-input"
+            />
+          </div>
+        </div>
+
+        <!-- 货物信息 -->
+        <div class="form-array-group">
+          <div class="array-header">
+            <h4 class="array-title">货物明细</h4>
+            <button type="button" class="add-item-btn" @click="addGoodsItem">
+              <PlusIcon class="btn-icon" />
+              添加货物
+            </button>
+          </div>
+          <div class="array-items">
+            <div v-for="(item, index) in detailForm.goods" :key="index" class="array-item">
+              <div class="array-item-header">
+                <span class="array-item-title">货物 #{{ index + 1 }}</span>
+                <button type="button" class="remove-item-btn" @click="removeGoodsItem(index)">
+                  <XIcon class="btn-icon" />
+                </button>
+              </div>
+              <div class="array-item-content">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label">货物名称</label>
+                    <input v-model="item.name" type="text" placeholder="请输入货物名称" class="form-input" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">数量</label>
+                    <input v-model="item.quantity" type="number" placeholder="请输入数量" class="form-input" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">价格</label>
+                    <input v-model="item.price" type="number" placeholder="请输入价格" class="form-input" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">规格型号</label>
+                    <input v-model="item.specification" type="text" placeholder="请输入规格型号" class="form-input" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-if="detailForm.goods.length === 0" class="empty-array-message">
+              暂无货物信息，请点击上方按钮添加
             </div>
           </div>
         </div>
-      </template>
+
+        <!-- 备注 -->
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <textarea 
+            v-model="detailForm.remarks" 
+            rows="3" 
+            placeholder="请输入合同备注信息"
+            class="form-input"
+          ></textarea>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="form-actions">
+          <button type="button" class="action-btn secondary" @click="handleAIAutoFill">
+            <SparklesIcon class="btn-icon" />
+            AI自动识别
+          </button>
+          <button type="submit" class="action-btn primary">
+            提交详情信息
+          </button>
+        </div>
+      </form>
     </DocumentUploadTemplate>
   </div>
 </template>
@@ -39,310 +195,310 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { UploadCloudIcon } from 'lucide-vue-next';
+import { PlusIcon, XIcon, SparklesIcon } from 'lucide-vue-next';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
-import GoodsTableInput from '@/components/upload-components/GoodsTableInput.vue';
+import '@/assets/styles/form.css';
 
 const router = useRouter();
+const fileId = ref('');
+const templateRef = ref();
 
-// 反向开票同意书文件
-const invoiceAgreement = ref<File | null>(null);
-const invoiceAgreementName = ref('');
+interface GoodsItem {
+  name: string;
+  quantity: number;
+  price: number;
+  specification: string;
+}
 
-// 处理反向开票同意书上传
-const handleInvoiceAgreementChange = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  if (input.files && input.files.length > 0) {
-    invoiceAgreement.value = input.files[0];
-    invoiceAgreementName.value = input.files[0].name;
+interface DetailForm {
+  contractNo: string;
+  signDate: string;
+  buyer: string;
+  seller: string;
+  paymentAccount: string;
+  receivingAccount: string;
+  taxRate: number;
+  invoiceType: string;
+  paymentDate: string;
+  paymentMethod: string;
+  totalAmount: number;
+  goods: GoodsItem[];
+  remarks: string;
+}
+
+// 表单数据
+const detailForm = ref<DetailForm>({
+  contractNo: '',
+  signDate: '',
+  buyer: '',
+  seller: '',
+  paymentAccount: '',
+  receivingAccount: '',
+  taxRate: 0,
+  invoiceType: '',
+  paymentDate: '',
+  paymentMethod: '',
+  totalAmount: 0,
+  goods: [],
+  remarks: ''
+});
+
+// 处理文件上传
+const handleFileUpload = async (formData: {name: string, file: File}) => {
+  const uploadData = new FormData();
+  uploadData.append('name', formData.name);
+  uploadData.append('file', formData.file);
+  uploadData.append('fileType', 'purchase_contract');
+
+  try {
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = { 
+      success: true, 
+      fileId: 'mock_file_' + Date.now(),
+      data: {
+        name: formData.name,
+        fileType: 'purchase_contract'
+      }
+    };
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 处理上传成功
+const handleUploadSuccess = (result: any) => {
+  if (result.success && result.fileId) {
+    fileId.value = result.fileId;
+  }
+}
+
+// 处理取消上传
+const handleCancelUpload = async () => {
+  if (fileId.value) {
+    try {
+      // TODO: 调用删除接口
+      console.log('删除文件:', fileId.value);
+      fileId.value = '';
+    } catch (error) {
+      console.error('删除文件失败：', error);
+    }
+  }
+}
+
+// 监听返回事件
+const handlePrevStep = () => {
+  // 返回时保留 fileId
+  console.log('返回基本信息，当前 fileId:', fileId.value);
+}
+
+// 添加货物明细
+const addGoodsItem = () => {
+  detailForm.value.goods.push({
+    name: '',
+    quantity: 0,
+    price: 0,
+    specification: ''
+  });
+}
+
+// 删除货物明细
+const removeGoodsItem = (index: number) => {
+  detailForm.value.goods.splice(index, 1);
+}
+
+// 提交详情信息
+const handleDetailSubmit = async () => {
+  try {
+    // TODO: 调用API保存详情信息
+  } catch (error) {
+    console.error('提交详情信息失败：', error);
   }
 };
 
-// 注册自定义组件
-const customComponents = {
-  'goods-table-input': GoodsTableInput
+// AI自动识别
+const handleAIAutoFill = async () => {
+  try {
+    // TODO: 调用AI识别接口
+    console.log('开始AI自动识别...');
+  } catch (error) {
+    console.error('AI识别失败：', error);
+  }
 };
-
-// 定义表单字段
-const detailFields = [
-  
-  {
-    key: 'contractNo',
-    label: '采购合同编号',
-    type: 'text',
-    placeholder: '请输入合同编号',
-    required: true
-  },
-  {
-    key: 'signDate', 
-    label: '签订时间',
-    type: 'date',
-    required: true
-  },
-  {
-    key: 'buyer',
-    label: '买方信息',
-    type: 'text',
-    placeholder: '请输入买方信息',
-    required: true
-  },
-  {
-    key: 'seller',
-    label: '卖方信息', 
-    type: 'text',
-    placeholder: '请输入卖方信息',
-    required: true
-  },
-  {
-    key: 'paymentAccount',
-    label: '付款账户',
-    type: 'text', 
-    placeholder: '请输入付款账户'
-  },
-  {
-    key: 'receivingAccount',
-    label: '收款账户',
-    type: 'text',
-    placeholder: '请输入收款账户'
-  },
-  {
-    key: 'taxRate',
-    label: '税率',
-    type: 'number',
-    placeholder: '请输入税率(%)'
-  },
-  {
-    key: 'invoiceType',
-    label: '发票类型',
-    type: 'select',
-    options: [
-      { label: '增值税专用发票', value: 'special' },
-      { label: '增值税普通发票', value: 'normal' }
-    ]
-  },
-  {
-    key: 'paymentDate',
-    label: '付款时间',
-    type: 'date'
-  },
-  {
-    key: 'paymentMethod',
-    label: '付款方式',
-    type: 'select',
-    options: [
-      { label: '现金', value: 'cash' },
-      { label: '银行转账', value: 'transfer' },
-      { label: '支票', value: 'check' }
-    ]
-  },
-  {
-    key: 'performancePeriod',
-    label: '履约期限',
-    type: 'text',
-    placeholder: '请输入履约期限'
-  },
-  {
-    key: 'performanceLocation',
-    label: '履约地点',
-    type: 'text',
-    placeholder: '请输入履约地点'
-  },
-  {
-    key: 'performanceMethod',
-    label: '履约方式',
-    type: 'text',
-    placeholder: '请输入履约方式'
-  },
-  {
-    key: 'handler',
-    label: '经办人信息',
-    type: 'text',
-    placeholder: '请输入经办人信息'
-  },
-  {
-    key: 'totalAmount',
-    label: '合同金额',
-    type: 'number',
-    placeholder: '请输入合同金额',
-    required: true
-  },
- 
-  {
-    key: 'goods',
-    label: '货物明细',
-    type: 'array',
-    itemLabel: '货物',
-    fields: [
-      {
-        key: 'name',
-        label: '货物名称',
-        type: 'text',
-        required: true,
-        placeholder: '请输入货物名称'
-      },
-      {
-        key: 'quantity',
-        label: '货物数量',
-        type: 'number',
-        required: true,
-        placeholder: '请输入数量'
-      },
-      {
-        key: 'price',
-        label: '货物价格',
-        type: 'number',
-        required: true,
-        placeholder: '请输入价格'
-      },
-      {
-        key: 'specification',
-        label: '规格型号',
-        type: 'text',
-        required: true,
-        placeholder: '请输入规格型号'
-      }
-    ],
-    showTotal: true, // 显示合计行
-    totalFields: ['price'], // 需要合计的字段
-    formatters: {
-      // 价格格式化
-      price: (value) => new Intl.NumberFormat('zh-CN', {
-        style: 'currency',
-        currency: 'CNY'
-      }).format(value)
-    }
-  },
-    // 可以添加备注等其他字段
-    {
-      key: 'remarks',
-      label: '备注',
-      type: 'textarea',
-      rows: 3,
-      placeholder: '请输入合同备注信息'
-    },
-  ];
-  
-  // AI自动识别文档
-  const handleAIRecognize = async (file) => {
-    // 模拟AI识别过程
-    console.log('正在识别文档...', file.name);
-  
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // 模拟识别结果
-        const result = {
-          contractNo: 'PC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-          supplier: '自动识别供应商',
-          amount: Math.floor(Math.random() * 1000000).toString(),
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          // 识别的货物数据
-          goods: [
-            {
-              name: '自动识别货物1',
-              specification: '规格A',
-              unit: '个',
-              quantity: 100,
-              unitPrice: 50,
-              amount: 5000
-            },
-            {
-              name: '自动识别货物2',
-              specification: '规格B',
-              unit: '箱',
-              quantity: 20,
-              unitPrice: 200,
-              amount: 4000
-            }
-          ],
-          remarks: '此合同由AI自动识别生成，请核对信息准确性。'
-        };
-        
-        alert('文档识别完成');
-        resolve(result);
-      }, 1500);
-    });
-  };
-  
-  // 提交上传
-  const handleSubmit = async (formData) => {
-    if (!invoiceAgreement.value) {
-      alert('请上传反向开票同意书');
-      return;
-    }
-
-    // 将反向开票同意书添加到表单数据中
-    const submitData = {
-      ...formData,
-      invoiceAgreement: invoiceAgreement.value
-    };
-
-    // 这里可以调用API上传文件和数据
-    console.log('提交上传', submitData);
-  
-    // 模拟上传成功
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        alert('上传成功');
-        // 上传成功后跳转到管理页面
-        router.push({ name: 'PurchaseContractManage' });
-        resolve(true);
-      }, 500);
-    });
-  };
 </script>
 
 <style scoped>
-.contract-upload {
-  /* 如果需要额外的样式 */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
-/* 复用 DocumentUploadTemplate 的样式 */
-.form-card {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 20px;
-  margin-top: 24px;
-}
-
-.form-card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-top: 0;
+.form-group {
   margin-bottom: 16px;
 }
 
-.file-upload-box {
-  position: relative;
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 8px;
 }
 
-.file-input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
 }
 
-.file-upload-label {
+.form-input:focus {
+  outline: none;
+  border-color: #1e88e5;
+}
+
+.form-array-group {
+  margin-top: 24px;
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+}
+
+.array-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.array-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.add-item-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border: 1px dashed #ddd;
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 13px;
+  color: #333;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.file-upload-label:hover {
-  border-color: #1e88e5;
+.add-item-btn:hover {
+  background-color: #e0e0e0;
 }
 
-.upload-icon {
-  width: 20px;
-  height: 20px;
-  color: #1e88e5;
+.array-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.array-item {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.array-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #eee;
+}
+
+.array-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.remove-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-item-btn:hover {
+  background-color: #f1f1f1;
+  color: #d32f2f;
+}
+
+.array-item-content {
+  padding: 16px;
+}
+
+.empty-array-message {
+  padding: 16px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.primary {
+  background-color: #1e88e5;
+  color: white;
+}
+
+.primary:hover {
+  background-color: #1976d2;
+}
+
+.secondary {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
 }
 </style>
   

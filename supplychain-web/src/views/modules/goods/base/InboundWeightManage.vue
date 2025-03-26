@@ -25,6 +25,20 @@
 import { ref } from 'vue';
 import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
 
+// 卡片主要显示列
+const cardMainColumns = [
+  {
+    key: 'weightNo',
+    label: '计量号'
+  },
+  {
+    key: 'name', 
+    label: '过磅单名称'
+  }
+];
+
+
+
 // 搜索查询
 const searchQuery = ref('');
 const startDate = ref('');
@@ -35,46 +49,7 @@ const statusFilter = ref('');
 const currentPage = ref(1);
 const totalPages = ref(5);
 
-// 定义表格列
-const columns = [
-  {
-    key: 'weightNo',
-    label: '过磅单号'
-  },
-  {
-    key: 'vehicleNo',
-    label: '车牌号'
-  },
-  {
-    key: 'grossWeight',
-    label: '毛重(kg)',
-    format: (value: number) => `${value.toLocaleString()}`
-  },
-  {
-    key: 'tareWeight',
-    label: '皮重(kg)',
-    format: (value: number) => `${value.toLocaleString()}`
-  },
-  {
-    key: 'netWeight',
-    label: '净重(kg)',
-    format: (value: number) => `${value.toLocaleString()}`
-  },
-  {
-    key: 'weightTime',
-    label: '过磅时间'
-  },
-  {
-    key: 'operator',
-    label: '操作员'
-  },
-  {
-    key: 'status',
-    label: '状态',
-    format: (value: string) => getStatusText(value),
-    class: (value: string) => `status-badge ${value}`
-  }
-];
+
 
 // 模拟数据
 const documents = ref([
@@ -121,16 +96,6 @@ const documents = ref([
     status: 'completed'
   }
 ]);
-
-// 获取状态文本
-const getStatusText = (status: string): string => {
-  switch (status) {
-    case 'active': return '有效';
-    case 'expired': return '已过期';
-    case 'completed': return '已完成';
-    default: return '未知';
-  }
-};
 
 // 搜索过磅单
 const searchWeights = () => {
