@@ -38,24 +38,14 @@ const detailFields = [
     type: 'text',
     placeholder: '请输入合同编号'
   },
-  {
-    key: 'moisture',
-    label: '水分(%)',
-    type: 'number',
-    placeholder: '请输入水分含量'
-  },
+  
   {
     key: 'impurity',
     label: '杂质(%)',
     type: 'number',
     placeholder: '请输入杂质含量'
   },
-  {
-    key: 'protein',
-    label: '蛋白质(%)',
-    type: 'number',
-    placeholder: '请输入蛋白质含量'
-  },
+ 
   {
     key: 'qualityTime',
     label: '质检时间',

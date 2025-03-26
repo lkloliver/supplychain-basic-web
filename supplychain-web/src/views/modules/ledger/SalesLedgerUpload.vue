@@ -2,6 +2,9 @@
   <DocumentUploadTemplate
     title="销售台账上传"
     detailsTitle="台账详情"
+    backRouteName="DashboardHome"
+    uploadRouteName="/dashboard/ledger/sales/upload"
+    manageRouteName="/dashboard/ledger/sales/manage"
     :detailFields="detailFields"
     :onSubmit="handleSubmit"
     :onAIRecognize="handleRecognize"

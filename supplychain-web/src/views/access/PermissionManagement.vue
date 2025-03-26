@@ -1,422 +1,119 @@
 <template>
-  <div class="permission-management">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="card-title">权限管理</h5>
-        <p class="card-subtitle mb-2 text-muted">管理系统中的原子操作权限和数据权限</p>
-      </div>
-      <div class="card-body">
-        <!-- 权限类型切换 -->
-        <ul class="nav nav-tabs" id="permissionTabs" role="tablist">
-          <li class="nav-item">
-            <a class="nav-link active" id="operation-tab" data-toggle="tab" href="#operation" role="tab" aria-controls="operation" aria-selected="true">
+    <div class="access-management">
+      <AccessManageTemplate
+        title="权限管理"
+        backRouteName="DashboardHome"
+        :documents="currentPermissions"
+        titleField="name"
+        titleColumnName="权限名称"
+        :documentIcon="KeyIcon"
+        searchPlaceholder="搜索权限名称或标识..."
+        emptyText="暂无权限数据"
+        :showFilterActions="true"
+        :showPagination="true"
+        :currentPage="currentPage"
+        :totalPages="totalPages"
+        :columns="columns"
+        @search="handleSearch"
+        @filter="handleFilter"
+        @sort="handleSort"
+        @export="handleExport"
+        @view="handleView"
+        @edit="handleEdit"
+        @delete="confirmDelete"
+        @page-change="handlePageChange"
+      >
+        <template #header-right>
+          <div class="permission-type-switch">
+            <button 
+              class="btn" 
+              :class="permissionType === 'operation' ? 'btn-primary' : 'btn-outline-secondary'"
+              @click="switchPermissionType('operation')"
+            >
               操作权限
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="data-tab" data-toggle="tab" href="#data" role="tab" aria-controls="data" aria-selected="false">
+            </button>
+            <button 
+              class="btn" 
+              :class="permissionType === 'data' ? 'btn-primary' : 'btn-outline-secondary'"
+              @click="switchPermissionType('data')"
+            >
               数据权限
-            </a>
-          </li>
-        </ul>
-        
-        <div class="tab-content mt-3" id="permissionTabsContent">
-          <!-- 操作权限 -->
-          <div class="tab-pane fade show active" id="operation" role="tabpanel" aria-labelledby="operation-tab">
-            <div class="alert alert-info mb-3">
-              <i class="fas fa-info-circle"></i> 
-              操作权限是系统中最基本的权限单元，用于控制用户可以执行的具体操作，如查看、新增、编辑、删除等。
-            </div>
-            <div class="d-flex justify-content-between mb-3">
-              <div>
-                <button type="button" class="btn btn-primary" @click="openAddOperationPermModal()">
-                  <i class="fas fa-plus"></i> 新增操作权限
-                </button>
-              </div>
-              <div class="input-group" style="width: 300px;">
-                <input type="text" class="form-control" placeholder="搜索权限" v-model="operationSearchQuery">
-                <div class="input-group-append">
-                  <button class="btn btn-outline-secondary" type="button" @click="searchOperationPermissions">
-                    <i class="fas fa-search"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div class="table-responsive">
-              <table class="table table-bordered table-striped">
-                <thead>
-                  <tr>
-                    <th style="width: 5%">序号</th>
-                    <th style="width: 15%">权限名称</th>
-                    <th style="width: 15%">权限标识</th>
-                    <th style="width: 15%">权限类型</th>
-                    <th style="width: 15%">所属模块</th>
-                    <th style="width: 25%">描述</th>
-                    <th style="width: 10%">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(perm, index) in filteredOperationPermissions" :key="perm.id">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ perm.name }}</td>
-                    <td>{{ perm.code }}</td>
-                    <td>{{ perm.type }}</td>
-                    <td>{{ perm.module }}</td>
-                    <td>{{ perm.description }}</td>
-                    <td>
-                      <div class="btn-group">
-                        <button type="button" class="btn btn-info btn-xs" @click="openEditOperationPermModal(perm)">
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="btn btn-danger btn-xs" @click="confirmDeleteOperationPerm(perm)">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          <!-- 数据权限 -->
-          <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
-            <div class="alert alert-info mb-3">
-              <i class="fas fa-info-circle"></i> 
-              数据权限用于控制用户可以访问的数据范围，如全部数据、部门数据、个人数据等。
-            </div>
-            <div class="d-flex justify-content-between mb-3">
-              <div>
-                <button type="button" class="btn btn-primary" @click="openAddDataPermModal()">
-                  <i class="fas fa-plus"></i> 新增数据权限
-                </button>
-              </div>
-              <div class="input-group" style="width: 300px;">
-                <input type="text" class="form-control" placeholder="搜索权限" v-model="dataSearchQuery">
-                <div class="input-group-append">
-                  <button class="btn btn-outline-secondary" type="button" @click="searchDataPermissions">
-                    <i class="fas fa-search"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div class="table-responsive">
-              <table class="table table-bordered table-striped">
-                <thead>
-                  <tr>
-                    <th style="width: 5%">序号</th>
-                    <th style="width: 15%">权限名称</th>
-                    <th style="width: 15%">权限标识</th>
-                    <th style="width: 15%">数据范围</th>
-                    <th style="width: 15%">所属模块</th>
-                    <th style="width: 25%">描述</th>
-                    <th style="width: 10%">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(perm, index) in filteredDataPermissions" :key="perm.id">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ perm.name }}</td>
-                    <td>{{ perm.code }}</td>
-                    <td>{{ perm.scope }}</td>
-                    <td>{{ perm.module }}</td>
-                    <td>{{ perm.description }}</td>
-                    <td>
-                      <div class="btn-group">
-                        <button type="button" class="btn btn-info btn-xs" @click="openEditDataPermModal(perm)">
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="btn btn-danger btn-xs" @click="confirmDeleteDataPerm(perm)">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- 操作权限模态框 -->
-    <div class="modal fade" id="operationPermModal" tabindex="-1" role="dialog" aria-labelledby="operationPermModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="operationPermModalLabel">
-              {{ isEdit ? '编辑操作权限' : '新增操作权限' }}
-            </h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
             </button>
           </div>
-          <div class="modal-body">
-            <form>
-              <div class="form-group">
-                <label for="operationPermName">权限名称<span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  id="operationPermName" 
-                  v-model="currentOperationPerm.name" 
-                  placeholder="请输入权限名称"
-                >
-              </div>
-              <div class="form-group">
-                <label for="operationPermCode">权限标识<span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  id="operationPermCode" 
-                  v-model="currentOperationPerm.code" 
-                  placeholder="请输入权限标识，如：system:user:add"
-                >
-              </div>
-              <div class="form-group">
-                <label for="operationPermType">权限类型<span class="text-danger">*</span></label>
-                <select class="form-control" id="operationPermType" v-model="currentOperationPerm.type">
-                  <option value="菜单">菜单</option>
-                  <option value="按钮">按钮</option>
-                  <option value="接口">接口</option>
-                  <option value="页面">页面</option>
-                  <option value="功能">功能</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="operationPermModule">所属模块<span class="text-danger">*</span></label>
-                <select class="form-control" id="operationPermModule" v-model="currentOperationPerm.module">
-                  <option value="系统管理">系统管理</option>
-                  <option value="合同管理">合同管理</option>
-                  <option value="货物管理">货物管理</option>
-                  <option value="结算管理">结算管理</option>
-                  <option value="财务管理">财务管理</option>
-                  <option value="发票管理">发票管理</option>
-                  <option value="台账管理">台账管理</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="operationPermDescription">描述</label>
-                <textarea 
-                  class="form-control" 
-                  id="operationPermDescription" 
-                  v-model="currentOperationPerm.description" 
-                  rows="3" 
-                  placeholder="请输入权限描述"
-                ></textarea>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-            <button type="button" class="btn btn-primary" @click="saveOperationPerm">保存</button>
-          </div>
-        </div>
-      </div>
+        </template>
+      </AccessManageTemplate>
     </div>
-  
-    <!-- 数据权限模态框 -->
-    <div class="modal fade" id="dataPermModal" tabindex="-1" role="dialog" aria-labelledby="dataPermModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="dataPermModalLabel">
-              {{ isEdit ? '编辑数据权限' : '新增数据权限' }}
-            </h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <form>
-              <div class="form-group">
-                <label for="dataPermName">权限名称<span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  id="dataPermName" 
-                  v-model="currentDataPerm.name" 
-                  placeholder="请输入权限名称"
-                >
-              </div>
-              <div class="form-group">
-                <label for="dataPermCode">权限标识<span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  id="dataPermCode" 
-                  v-model="currentDataPerm.code" 
-                  placeholder="请输入权限标识，如：data:contract:all"
-                >
-              </div>
-              <div class="form-group">
-                <label for="dataPermScope">数据范围<span class="text-danger">*</span></label>
-                <select class="form-control" id="dataPermScope" v-model="currentDataPerm.scope">
-                  <option value="全部数据">全部数据</option>
-                  <option value="部门数据">部门数据</option>
-                  <option value="部门及以下数据">部门及以下数据</option>
-                  <option value="个人数据">个人数据</option>
-                  <option value="自定义数据">自定义数据</option>
-                  <option value="指定部门数据">指定部门数据</option>
-                </select>
-              </div>
-              <div class="form-group" v-if="currentDataPerm.scope === '指定部门数据'">
-                <label>指定部门</label>
-                <select class="form-control" v-model="currentDataPerm.specifiedDeptId">
-                  <option value="">请选择部门</option>
-                  <option v-for="dept in departments" :key="dept.id" :value="dept.id">
-                    {{ dept.name }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="dataPermModule">所属模块<span class="text-danger">*</span></label>
-                <select class="form-control" id="dataPermModule" v-model="currentDataPerm.module">
-                  <option value="合同管理">合同管理</option>
-                  <option value="货物管理">货物管理</option>
-                  <option value="结算管理">结算管理</option>
-                  <option value="财务管理">财务管理</option>
-                  <option value="发票管理">发票管理</option>
-                  <option value="台账管理">台账管理</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="dataPermDescription">描述</label>
-                <textarea 
-                  class="form-control" 
-                  id="dataPermDescription" 
-                  v-model="currentDataPerm.description" 
-                  rows="3" 
-                  placeholder="请输入权限描述"
-                ></textarea>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-            <button type="button" class="btn btn-primary" @click="saveDataPerm">保存</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- 删除确认模态框 -->
-    <div class="modal fade" id="deletePermModal" tabindex="-1" role="dialog" aria-labelledby="deletePermModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="deletePermModalLabel">确认删除</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p>确定要删除权限 <strong>{{ currentPermToDelete.name }}</strong> 吗？此操作不可恢复！</p>
-            <p class="text-danger">
-              <i class="fas fa-exclamation-triangle"></i> 
-              警告：删除权限可能会影响现有角色的权限配置！
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-            <button type="button" class="btn btn-danger" @click="deletePermission">确认删除</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  </template>
-  
-  <script>
-  export default {
+    </template>
+    
+    <script>
+    import { KeyIcon } from 'lucide-vue-next';
+    import AccessManageTemplate from '@/components/templates/AccessManageTemplate.vue';
+    
+    export default {
     name: 'PermissionManagement',
+    components: {
+      AccessManageTemplate
+    },
     data() {
       return {
-        // 搜索查询
-        operationSearchQuery: '',
-        dataSearchQuery: '',
+        // 权限类型（操作权限/数据权限）
+        permissionType: 'operation',
         
-        // 操作权限数据
+        // 权限数据
         operationPermissions: [],
-        
-        // 数据权限数据
         dataPermissions: [],
         
-        // 当前操作的权限
-        currentOperationPerm: {
-          id: null,
-          name: '',
-          code: '',
-          type: '按钮',
-          module: '系统管理',
-          description: ''
+        // 分页
+        currentPage: 1,
+        pageSize: 10,
+        
+        // 搜索和筛选
+        searchQuery: '',
+        filters: {
+          module: '',
+          type: '',
+          scope: ''
         },
         
-        currentDataPerm: {
-          id: null,
-          name: '',
-          code: '',
-          scope: '全部数据',
-          module: '合同管理',
-          description: '',
-          specifiedDeptId: ''
-        },
+        // 加载状态
+        loading: false,
         
-        // 当前要删除的权限
-        currentPermToDelete: {
-          id: null,
-          name: '',
-          type: 'operation' // 'operation' 或 'data'
-        },
+        // 图标
+        KeyIcon,
         
-        // 编辑状态标记
-        isEdit: false,
-  
-        departments: [
-          { id: 1, name: '总公司' },
-          { id: 2, name: '研发部' },
-          { id: 3, name: '市场部' },
-          { id: 4, name: '财务部' },
-          { id: 5, name: '前端组' },
-          { id: 6, name: '后端组' },
-          { id: 7, name: '测试组' }
+        // 操作权限列
+        operationColumns: [
+          { key: 'code', label: '权限标识' },
+          { key: 'type', label: '权限类型' },
+          { key: 'module', label: '所属模块' },
+          { key: 'description', label: '描述' }
         ],
+        
+        // 数据权限列
+        dataColumns: [
+          { key: 'code', label: '权限标识' },
+          { key: 'scope', label: '数据范围' },
+          { key: 'module', label: '所属模块' },
+          { key: 'description', label: '描述' }
+        ]
       }
     },
     computed: {
-      // 过滤后的操作权限
-      filteredOperationPermissions() {
-        if (!this.operationSearchQuery) {
-          return this.operationPermissions;
-        }
-        
-        const query = this.operationSearchQuery.toLowerCase();
-        return this.operationPermissions.filter(perm => 
-          perm.name.toLowerCase().includes(query) ||
-          perm.code.toLowerCase().includes(query) ||
-          perm.type.toLowerCase().includes(query) ||
-          perm.module.toLowerCase().includes(query) ||
-          (perm.description && perm.description.toLowerCase().includes(query))
-        );
+      // 当前显示的权限列表
+      currentPermissions() {
+        return this.permissionType === 'operation' ? this.operationPermissions : this.dataPermissions;
       },
       
-      // 过滤后的数据权限
-      filteredDataPermissions() {
-        if (!this.dataSearchQuery) {
-          return this.dataPermissions;
-        }
-        
-        const query = this.dataSearchQuery.toLowerCase();
-        return this.dataPermissions.filter(perm => 
-          perm.name.toLowerCase().includes(query) ||
-          perm.code.toLowerCase().includes(query) ||
-          perm.scope.toLowerCase().includes(query) ||
-          perm.module.toLowerCase().includes(query) ||
-          (perm.description && perm.description.toLowerCase().includes(query))
-        );
+      // 当前使用的列
+      columns() {
+        return this.permissionType === 'operation' ? this.operationColumns : this.dataColumns;
+      },
+      
+      // 总页数
+      totalPages() {
+        const total = this.permissionType === 'operation' ? 
+          this.operationPermissions.length : this.dataPermissions.length;
+        return Math.ceil(total / this.pageSize);
       }
     },
     created() {
@@ -426,6 +123,8 @@
     methods: {
       // 获取操作权限列表
       fetchOperationPermissions() {
+        this.loading = true;
+        
         // 模拟API调用
         setTimeout(() => {
           // 模拟数据
@@ -511,11 +210,15 @@
               description: '新增采购合同'
             }
           ];
+          
+          this.loading = false;
         }, 500);
       },
       
       // 获取数据权限列表
       fetchDataPermissions() {
+        this.loading = true;
+        
         // 模拟API调用
         setTimeout(() => {
           // 模拟数据
@@ -593,215 +296,229 @@
               description: '只能查看个人创建的货物数据'
             }
           ];
+          
+          this.loading = false;
         }, 500);
       },
       
-      // 搜索操作权限
-      searchOperationPermissions() {
-        // 实际应用中这里会调用API
-        console.log('搜索操作权限:', this.operationSearchQuery);
-      },
-      
-      // 搜索数据权限
-      searchDataPermissions() {
-        // 实际应用中这里会调用API
-        console.log('搜索数据权限:', this.dataSearchQuery);
-      },
-      
-      // 打开新增操作权限模态框
-      openAddOperationPermModal() {
-        this.isEdit = false;
-        this.currentOperationPerm = {
-          id: null,
-          name: '',
-          code: '',
-          type: '按钮',
-          module: '系统管理',
-          description: ''
+      // 切换权限类型
+      switchPermissionType(type) {
+        this.permissionType = type;
+        this.currentPage = 1;
+        this.searchQuery = '';
+        this.filters = {
+          module: '',
+          type: '',
+          scope: ''
         };
-        
-        // 使用jQuery打开模态框
-        $('#operationPermModal').modal('show');
       },
       
-      // 打开编辑操作权限模态框
-      openEditOperationPermModal(perm) {
-        this.isEdit = true;
-        this.currentOperationPerm = { ...perm };
+      // 处理搜索
+      handleSearch(query) {
+        this.searchQuery = query;
+        this.currentPage = 1;
         
-        // 使用jQuery打开模态框
-        $('#operationPermModal').modal('show');
-      },
-      
-      // 保存操作权限
-      saveOperationPerm() {
-        // 表单验证
-        if (!this.currentOperationPerm.name) {
-          alert('权限名称不能为空');
-          return;
-        }
+        // 实际应用中这里会调用API
+        console.log('搜索权限:', query);
         
-        if (!this.currentOperationPerm.code) {
-          alert('权限标识不能为空');
-          return;
-        }
-        
-        // 模拟API调用
+        // 模拟搜索结果
+        this.loading = true;
         setTimeout(() => {
-          if (this.isEdit) {
-            // 更新现有权限
-            const index = this.operationPermissions.findIndex(perm => perm.id === this.currentOperationPerm.id);
-            if (index !== -1) {
-              this.operationPermissions[index] = { ...this.currentOperationPerm };
+          // 简单的客户端搜索模拟
+          if (query) {
+            if (this.permissionType === 'operation') {
+              this.operationPermissions = this.operationPermissions.filter(perm => 
+                perm.name.includes(query) || 
+                perm.code.includes(query)
+              );
+            } else {
+              this.dataPermissions = this.dataPermissions.filter(perm => 
+                perm.name.includes(query) || 
+                perm.code.includes(query)
+              );
             }
           } else {
-            // 创建新权限
-            const newId = Math.max(...this.operationPermissions.map(perm => perm.id)) + 1;
-            
-            const newPerm = {
-              ...this.currentOperationPerm,
-              id: newId
-            };
-            
-            this.operationPermissions.push(newPerm);
-          }
-          
-          // 关闭模态框
-          $('#operationPermModal').modal('hide');
-          
-          // 显示成功消息
-          alert(this.isEdit ? '操作权限更新成功' : '操作权限创建成功');
-        }, 500);
-      },
-      
-      // 打开新增数据权限模态框
-      openAddDataPermModal() {
-        this.isEdit = false;
-        this.currentDataPerm = {
-          id: null,
-          name: '',
-          code: '',
-          scope: '全部数据',
-          module: '合同管理',
-          description: '',
-          specifiedDeptId: ''
-        };
-        
-        // 使用jQuery打开模态框
-        $('#dataPermModal').modal('show');
-      },
-      
-      // 打开编辑数据权限模态框
-      openEditDataPermModal(perm) {
-        this.isEdit = true;
-        this.currentDataPerm = { ...perm };
-        
-        // 使用jQuery打开模态框
-        $('#dataPermModal').modal('show');
-      },
-      
-      // 保存数据权限
-      saveDataPerm() {
-        // 表单验证
-        if (!this.currentDataPerm.name) {
-          alert('权限名称不能为空');
-          return;
-        }
-        
-        if (!this.currentDataPerm.code) {
-          alert('权限标识不能为空');
-          return;
-        }
-        
-        // 验证指定部门
-        if (this.currentDataPerm.scope === '指定部门数据' && !this.currentDataPerm.specifiedDeptId) {
-          alert('请选择指定部门');
-          return;
-        }
-        
-        // 模拟API调用
-        setTimeout(() => {
-          if (this.isEdit) {
-            // 更新现有权限
-            const index = this.dataPermissions.findIndex(perm => perm.id === this.currentDataPerm.id);
-            if (index !== -1) {
-              this.dataPermissions[index] = { ...this.currentDataPerm };
+            if (this.permissionType === 'operation') {
+              this.fetchOperationPermissions();
+            } else {
+              this.fetchDataPermissions();
             }
-          } else {
-            // 创建新权限
-            const newId = Math.max(...this.dataPermissions.map(perm => perm.id)) + 1;
-            
-            const newPerm = {
-              ...this.currentDataPerm,
-              id: newId
-            };
-            
-            this.dataPermissions.push(newPerm);
           }
-          
-          // 关闭模态框
-          $('#dataPermModal').modal('hide');
-          
-          // 显示成功消息
-          alert(this.isEdit ? '数据权限更新成功' : '数据权限创建成功');
+          this.loading = false;
         }, 500);
       },
       
-      // 确认删除操作权限
-      confirmDeleteOperationPerm(perm) {
-        this.currentPermToDelete = {
-          id: perm.id,
-          name: perm.name,
-          type: 'operation'
-        };
-        
-        // 打开确认删除模态框
-        $('#deletePermModal').modal('show');
+      // 处理筛选
+      handleFilter() {
+        // 简化筛选逻辑，直接应用默认筛选
+        this.applyFilter();
       },
       
-      // 确认删除数据权限
-      confirmDeleteDataPerm(perm) {
-        this.currentPermToDelete = {
-          id: perm.id,
-          name: perm.name,
-          type: 'data'
-        };
+      // 应用筛选
+      applyFilter() {
+        this.currentPage = 1;
         
-        // 打开确认删除模态框
-        $('#deletePermModal').modal('show');
+        // 实际应用中这里会调用API
+        console.log('筛选条件:', this.filters);
+        
+        // 模拟筛选结果
+        this.loading = true;
+        setTimeout(() => {
+          // 简单的客户端筛选模拟
+          if (this.permissionType === 'operation') {
+            this.fetchOperationPermissions();
+            let filteredPerms = [...this.operationPermissions];
+            
+            if (this.filters.module) {
+              filteredPerms = filteredPerms.filter(perm => 
+                perm.module === this.filters.module
+              );
+            }
+            
+            if (this.filters.type) {
+              filteredPerms = filteredPerms.filter(perm => 
+                perm.type === this.filters.type
+              );
+            }
+            
+            this.operationPermissions = filteredPerms;
+          } else {
+            this.fetchDataPermissions();
+            let filteredPerms = [...this.dataPermissions];
+            
+            if (this.filters.module) {
+              filteredPerms = filteredPerms.filter(perm => 
+                perm.module === this.filters.module
+              );
+            }
+            
+            if (this.filters.scope) {
+              filteredPerms = filteredPerms.filter(perm => 
+                perm.scope === this.filters.scope
+              );
+            }
+            
+            this.dataPermissions = filteredPerms;
+          }
+          
+          this.loading = false;
+        }, 500);
+      },
+      
+      // 处理排序
+      handleSort() {
+        // 实际应用中这里会调用API
+        console.log('排序权限');
+        
+        // 模拟排序
+        if (this.permissionType === 'operation') {
+          this.operationPermissions.sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+          this.dataPermissions.sort((a, b) => a.name.localeCompare(b.name));
+        }
+      },
+      
+      // 处理导出
+      handleExport() {
+        console.log('导出权限数据');
+        // 实际应用中这里会调用导出API
+        alert('权限数据导出功能将在后续版本中提供');
+      },
+      
+      // 查看权限
+      handleView(perm) {
+        console.log('查看权限:', perm);
+        // 实际应用中这里会跳转到权限详情页
+        this.$router.push({ 
+          name: this.permissionType === 'operation' ? 'operation-permission-detail' : 'data-permission-detail', 
+          params: { id: perm.id } 
+        });
+      },
+      
+      // 编辑权限
+      handleEdit(perm) {
+        console.log('编辑权限:', perm);
+        // 实际应用中这里会跳转到权限编辑页
+        this.$router.push({ 
+          name: this.permissionType === 'operation' ? 'operation-permission-edit' : 'data-permission-edit', 
+          params: { id: perm.id } 
+        });
+      },
+      
+      // 确认删除权限
+      confirmDelete(perm) {
+        if (confirm(`确定要删除权限 ${perm.name} 吗？此操作不可恢复！\n警告：删除权限可能会影响现有角色的权限配置！`)) {
+          this.deletePermission(perm);
+        }
       },
       
       // 删除权限
-      deletePermission() {
+      deletePermission(perm) {
+        this.loading = true;
+        
         // 模拟API调用
         setTimeout(() => {
-          if (this.currentPermToDelete.type === 'operation') {
-            // 删除操作权限
+          // 从列表中移除权限
+          if (this.permissionType === 'operation') {
             this.operationPermissions = this.operationPermissions.filter(
-              perm => perm.id !== this.currentPermToDelete.id
+              p => p.id !== perm.id
             );
           } else {
-            // 删除数据权限
             this.dataPermissions = this.dataPermissions.filter(
-              perm => perm.id !== this.currentPermToDelete.id
+              p => p.id !== perm.id
             );
           }
           
-          // 关闭模态框
-          $('#deletePermModal').modal('hide');
+          this.loading = false;
           
           // 显示成功消息
           alert('权限删除成功');
+        }, 800);
+      },
+      
+      // 处理页码变化
+      handlePageChange(page) {
+        this.currentPage = page;
+        
+        // 实际应用中这里会调用API获取对应页的数据
+        console.log('切换到页码:', page);
+        
+        // 模拟分页
+        this.loading = true;
+        setTimeout(() => {
+          this.loading = false;
         }, 500);
       }
     }
-  }
-  </script>
-  
-  <style scoped>
-  .permission-management {
-    padding: 15px;
-  }
-  </style>
-  
-  
+    }
+    </script>
+    
+    <style scoped>
+    .access-management {
+      padding: 0;
+    }
+    
+    .permission-type-switch {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .permission-type-switch .btn {
+      font-size: 14px;
+      padding: 6px 12px;
+    }
+    
+    .btn-primary {
+      background-color: #1e88e5;
+      color: white;
+      border: 1px solid #1e88e5;
+    }
+    
+    .btn-outline-secondary {
+      background-color: transparent;
+      color: #666;
+      border: 1px solid #ddd;
+    }
+    </style>
+    
+    

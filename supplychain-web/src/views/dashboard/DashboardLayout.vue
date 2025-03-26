@@ -510,6 +510,52 @@
               </router-link>
             </div>
           </div>
+
+          
+          <div class="nav-group">
+            <div 
+              class="nav-group-header" 
+              @click="toggleNavGroup('blockchain')"
+            >
+              <BlocksIcon class="nav-icon" />
+              <span>区块链存证模块</span>
+              <ChevronDownIcon 
+                class="nav-arrow" 
+                :class="{ 'rotate-180': expandedGroups.blockchain }" 
+              />
+            </div>
+            <div 
+              class="nav-group-content" 
+              v-show="expandedGroups.blockchain"
+            >
+              <router-link 
+                :to="{ name: 'BlockchainRecord' }"
+                custom
+                v-slot="{ navigate, isActive }"
+              >
+                <div 
+                  class="nav-item" 
+                  :class="{ active: isActive }"
+                  @click="navigate"
+                >
+                  <span>区块链存证记录</span>
+                </div>
+              </router-link>
+              <router-link 
+                :to="{ name: 'BlockchainVerify' }"
+                custom
+                v-slot="{ navigate, isActive }"
+              >
+                <div 
+                  class="nav-item" 
+                  :class="{ active: isActive }"
+                  @click="navigate"
+                >
+                  <span>区块链验证</span>
+                </div>
+              </router-link>
+            </div>
+          </div>
           
           <div class="nav-group" v-if="isAdmin">
             <div 
@@ -616,7 +662,8 @@ import {
   TruckIcon,
   ShieldIcon,  // 添加访问控制图标
   UsersIcon,    // 添加用户图标
-  BriefcaseIcon // 添加部门图标
+  BriefcaseIcon, // 添加部门图标
+  BlocksIcon
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -634,9 +681,11 @@ const toggleUserMenu = () => {
 // 导航项
 const navItems = [
   { key: 'home', label: '首页', icon: HomeIcon, route: { name: 'DashboardHome' } },
-  { key: 'todo', label: '待办', icon: ClipboardListIcon, route: { path: '/dashboard/todo' } },
-  { key: 'processing', label: '办理中', icon: ClockIcon, route: { path: '/dashboard/processing' } },
-  { key: 'completed', label: '已办', icon: CheckSquareIcon, route: { path: '/dashboard/completed' } }
+  { key: 'usercenter', label: '个人中心', icon: UserIcon, route: { name: 'UserCenter' } },
+
+  // { key: 'todo', label: '待办', icon: ClipboardListIcon, route: { path: '/dashboard/todo' } },
+  // { key: 'processing', label: '办理中', icon: ClockIcon, route: { path: '/dashboard/processing' } },
+  // { key: 'completed', label: '已办', icon: CheckSquareIcon, route: { path: '/dashboard/completed' } }
 ];
 
 // 展开的导航组

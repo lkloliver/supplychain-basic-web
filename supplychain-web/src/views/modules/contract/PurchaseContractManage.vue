@@ -25,18 +25,19 @@
 import { ref, onMounted } from 'vue';
 import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
 import GoodsTable from '@/components/detail-components/GoodsTable.vue';
+import { fetchPurchaseContracts, deletePurchaseContract } from '@/mocks/contract/purchase';
 
-// 模拟数据
+// 状态
 const contracts = ref([]);
 const currentPage = ref(1);
 const totalPages = ref(1);
+const pageSize = 10;
 
 // 卡片主要显示列
 const cardMainColumns = [
-  { key: 'contractDate', label: '签订日期' },
-  { key: 'supplierName', label: '供应商' },
-  { key: 'totalAmount', label: '合同金额', formatter: formatCurrency },
-  { key: 'status', label: '状态' }
+  { key: 'contractNo', label: '合同名称' },
+  { key: 'buyer', label: '买方' },
+  { key: 'seller', label: '卖方' }
 ];
 
 // 详情分组
@@ -44,13 +45,22 @@ const detailGroups = [
   {
     title: '基本信息',
     fields: [
-      { key: 'contractNo', label: '合同编号' },
-      { key: 'contractDate', label: '签订日期' },
-      { key: 'supplierName', label: '供应商' },
-      { key: 'supplierContact', label: '联系人' },
-      { key: 'supplierPhone', label: '联系电话' },
+      { key: 'contractNo', label: '采购合同编号' },
+      { key: 'signDate', label: '签订时间' },
+      { key: 'buyer', label: '买方信息' },
+      { key: 'seller', label: '卖方信息' },
+      { key: 'paymentAccount', label: '付款账户' },
+      { key: 'receivingAccount', label: '收款账户' },
+      { key: 'taxRate', label: '税率' },
+      { key: 'invoiceType', label: '发票类型' },
+      { key: 'paymentDate', label: '付款时间' },
+      { key: 'paymentMethod', label: '付款方式' },
+      { key: 'performancePeriod', label: '履约期限' },
+      { key: 'performanceLocation', label: '履约地点' },
+      { key: 'performanceMethod', label: '履约方式' },
+      { key: 'handler', label: '经办人信息' },
       { key: 'totalAmount', label: '合同金额', formatter: formatCurrency },
-      { key: 'status', label: '状态' }
+      { key: 'remarks', label: '备注' }
     ]
   },
   {
@@ -58,32 +68,13 @@ const detailGroups = [
     customComponent: 'goods-table',
     dataKey: 'goods',
     columns: [
-      { key: 'name', label: '货物名称' },
-      { key: 'specification', label: '规格' },
-      { key: 'quantity', label: '数量' },
-      { key: 'unit', label: '单位' },
-      { key: 'unitPrice', label: '单价', formatter: formatCurrency },
-      { key: 'total', label: '小计', formatter: formatCurrency, isTotal: true }
+      { key: 'name', label: '货物名称', width: '25%' },
+      { key: 'quantity', label: '货物数量', width: '20%' },
+      { key: 'price', label: '货物价格', width: '20%', formatter: formatCurrency },
+      { key: 'specification', label: '规格型号', width: '25%' }
     ],
-    showActions: true,
+    showActions: false,
     showFooter: true
-  },
-  {
-    title: '付款信息',
-    fields: [
-      { key: 'paymentMethod', label: '付款方式' },
-      { key: 'paymentTerms', label: '付款条件' },
-      { key: 'bankName', label: '开户银行' },
-      { key: 'bankAccount', label: '银行账号' }
-    ]
-  },
-  {
-    title: '其他信息',
-    fields: [
-      { key: 'deliveryDate', label: '交货日期' },
-      { key: 'deliveryAddress', label: '交货地点' },
-      { key: 'remarks', label: '备注' }
-    ]
   }
 ];
 
@@ -107,61 +98,16 @@ function formatCurrency(value) {
   }).format(numValue);
 }
 
-// 模拟获取数据
+// 获取数据
 const fetchData = async (page = 1) => {
-  // 模拟API请求延迟
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // 生成模拟数据
-  const mockContracts = [
-    {
-      id: 1,
-      contractNo: 'CT-2023-001',
-      contractDate: '2023-05-15',
-      supplierName: '北京供应商A有限公司',
-      supplierContact: '张经理',
-      supplierPhone: '13800138000',
-      totalAmount: 125000,
-      status: '已签署',
-      paymentMethod: '银行转账',
-      paymentTerms: '30%预付款，70%交货后付款',
-      bankName: '中国工商银行北京分行',
-      bankAccount: '6222021234567890123',
-      deliveryDate: '2023-06-30',
-      deliveryAddress: '北京市朝阳区某某路123号',
-      remarks: '年度采购合同',
-      goods: [
-        { id: 101, name: '原材料A', specification: '标准型', quantity: 100, unit: '吨', unitPrice: 800, total: 80000 },
-        { id: 102, name: '原材料B', specification: '高纯度', quantity: 50, unit: '吨', unitPrice: 900, total: 45000 }
-      ]
-    },
-    {
-      id: 2,
-      contractNo: 'CT-2023-002',
-      contractDate: '2023-05-20',
-      supplierName: '上海供应商B有限公司',
-      supplierContact: '李经理',
-      supplierPhone: '13900139000',
-      totalAmount: 86000,
-      status: '执行中',
-      paymentMethod: '银行转账',
-      paymentTerms: '50%预付款，50%交货后付款',
-      bankName: '中国建设银行上海分行',
-      bankAccount: '6227001234567890123',
-      deliveryDate: '2023-07-15',
-      deliveryAddress: '上海市浦东新区某某路456号',
-      remarks: '季度采购合同',
-      goods: [
-        { id: 201, name: '零部件A', specification: '标准型', quantity: 200, unit: '个', unitPrice: 150, total: 30000 },
-        { id: 202, name: '零部件B', specification: '加强型', quantity: 100, unit: '个', unitPrice: 200, total: 20000 },
-        { id: 203, name: '零部件C', specification: '特殊型', quantity: 120, unit: '个', unitPrice: 300, total: 36000 }
-      ]
-    }
-  ];
-  
-  contracts.value = mockContracts;
-  totalPages.value = 1;
-  currentPage.value = page;
+  try {
+    const response = await fetchPurchaseContracts(page, pageSize);
+    contracts.value = response.data;
+    totalPages.value = Math.ceil(response.total / pageSize);
+    currentPage.value = page;
+  } catch (error) {
+    console.error('获取合同列表失败:', error);
+  }
 };
 
 // 事件处理函数
@@ -178,9 +124,13 @@ const handleEdit = (contract) => {
   console.log('编辑合同:', contract);
 };
 
-const handleDelete = (contract) => {
-  console.log('删除合同:', contract);
-  fetchData(currentPage.value);
+const handleDelete = async (contract) => {
+  try {
+    await deletePurchaseContract(contract.id);
+    await fetchData(currentPage.value);
+  } catch (error) {
+    console.error('删除合同失败:', error);
+  }
 };
 
 const handlePageChange = (page) => {

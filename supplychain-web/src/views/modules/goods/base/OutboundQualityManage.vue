@@ -49,21 +49,13 @@ const columns = [
     key: 'contractNo',
     label: '合同编号'
   },
-  {
-    key: 'moisture',
-    label: '水分(%)',
-    format: (value: number) => `${value}%`
-  },
+  
   {
     key: 'impurity',
     label: '杂质(%)',
     format: (value: number) => `${value}%`
   },
-  {
-    key: 'protein',
-    label: '蛋白质(%)',
-    format: (value: number) => `${value}%`
-  },
+  
   {
     key: 'qualityTime',
     label: '质检时间'

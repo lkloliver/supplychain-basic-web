@@ -2,6 +2,9 @@
   <DocumentManageTemplate
     title="销售台账管理"
     :columns="columns"
+    backRouteName="DashboardHome"
+    uploadRouteName="/dashboard/ledger/sales/upload"
+    manageRouteName="/dashboard/ledger/sales/manage"
     :documents="documents"
     :currentPage="currentPage"
     :totalPages="totalPages"

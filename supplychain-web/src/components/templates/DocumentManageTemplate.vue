@@ -471,12 +471,12 @@
   
   .search-box {
     position: relative;
-    width: 300px;
+    width: 180px;
   }
   
   .search-input {
     width: 100%;
-    padding: 8px 12px 8px 36px;
+    padding: 6px 10px 6px 32px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
@@ -484,11 +484,11 @@
   
   .search-icon {
     position: absolute;
-    left: 12px;
+    left: 10px;
     top: 50%;
     transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: #999;
   }
   
@@ -826,7 +826,8 @@
     }
     
     .search-box {
-      width: 100%;
+      width: 180px;
+      margin-right: auto;
     }
     
     .filter-actions {

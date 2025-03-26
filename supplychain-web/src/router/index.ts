@@ -583,6 +583,22 @@ const routes = [
           },
         ],
       },
+      // 区块链存证模块
+      {
+        path: "blockchain",
+        children: [
+          {
+            path: "record",
+            name: "BlockchainRecord",
+            component: () => import("@/views/modules/blockchain/BlockchainRecord.vue"),
+          },
+          {
+            path: "verify",
+            name: "BlockchainVerify",
+            component: () => import("@/views/modules/blockchain/BlockchainVerify.vue"),
+          },
+        ],
+      },
     ],
   },
 ]
