@@ -1,4 +1,4 @@
-package org.hust.cse.supplychain.common.response;
+package org.hust.cse.supplychain.basic.common.response;
 
 import lombok.Data;
 
