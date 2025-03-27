@@ -9,7 +9,7 @@
       
       <div class="user-section">
         <div class="user-info" @click="toggleUserMenu">
-          <span class="username">{{ user.username || '用户' }}</span>
+          <span class="username">{{ userStore.userInfo?.username || '用户' }}</span>
           <img src="/avatar-placeholder.png" alt="Avatar" class="avatar" />
         </div>
         
@@ -129,7 +129,7 @@
               class="nav-group-content" 
               v-show="expandedGroups.goods"
             >
-              <template v-if="user.version === 'base'">
+              <template v-if="userStore.version === 'BASE'">
                 <router-link 
                   :to="{ name: 'InboundWeight' }"
                   custom
@@ -644,12 +644,6 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { 
   HomeIcon, 
-  ClipboardListIcon, 
-  ClockIcon, 
-  CheckSquareIcon,
-  UserIcon,
-  SettingsIcon,
-  LogOutIcon,
   FileTextIcon,
   PackageIcon,
   CalculatorIcon,
@@ -657,20 +651,15 @@ import {
   BookIcon,
   ChevronDownIcon,
   ImageIcon,
-  ClipboardCheckIcon,
-  ScaleIcon,
-  TruckIcon,
-  ShieldIcon,  // 添加访问控制图标
-  UsersIcon,    // 添加用户图标
-  BriefcaseIcon, // 添加部门图标
+  UserIcon,
+  SettingsIcon,
+  LogOutIcon,
+  ShieldIcon,
   BlocksIcon
 } from 'lucide-vue-next';
 
 const router = useRouter();
 const userStore = useUserStore();
-
-// 用户信息
-const user = computed(() => userStore.user);
 
 // 用户菜单
 const showUserMenu = ref(false);
@@ -682,10 +671,6 @@ const toggleUserMenu = () => {
 const navItems = [
   { key: 'home', label: '首页', icon: HomeIcon, route: { name: 'DashboardHome' } },
   { key: 'usercenter', label: '个人中心', icon: UserIcon, route: { name: 'UserCenter' } },
-
-  // { key: 'todo', label: '待办', icon: ClipboardListIcon, route: { path: '/dashboard/todo' } },
-  // { key: 'processing', label: '办理中', icon: ClockIcon, route: { path: '/dashboard/processing' } },
-  // { key: 'completed', label: '已办', icon: CheckSquareIcon, route: { path: '/dashboard/completed' } }
 ];
 
 // 展开的导航组
@@ -696,20 +681,21 @@ const expandedGroups = reactive({
   finance: false,
   invoice: false,
   ledger: false,
-  access: false  // 添加访问控制组
+  access: false,
+  blockchain: false
 });
 
 // 添加isAdmin计算属性
 const isAdmin = computed(() => userStore.isAdmin);
 
 // 切换导航组展开状态
-const toggleNavGroup = (group: string) => {
-  expandedGroups[group as keyof typeof expandedGroups] = !expandedGroups[group as keyof typeof expandedGroups];
+const toggleNavGroup = (group: keyof typeof expandedGroups) => {
+  expandedGroups[group] = !expandedGroups[group];
 };
 
 // 退出登录
 const logout = () => {
-  userStore.clearUser();
+  userStore.clearState();
   router.push('/login');
 };
 

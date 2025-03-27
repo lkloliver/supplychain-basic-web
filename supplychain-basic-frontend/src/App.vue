@@ -3,7 +3,15 @@
 </template>
 
 <script lang="ts" setup>
-// App.vue
+import { onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+
+// 在应用启动时初始化用户状态
+onMounted(() => {
+  userStore.initState()
+})
 </script>
 
 <style>

@@ -25,21 +25,21 @@
       <div v-if="activeTab === 'login'" class="form-container">
         <div class="login-type-selector">
           <button 
-            :class="['login-type-btn', { active: loginType === 'password' }]" 
-            @click="loginType = 'password'"
+            :class="['login-type-btn', { active: loginType === 'username' }]" 
+            @click="switchLoginType('username')"
           >
             用户名密码登录
           </button>
           <button 
-            :class="['login-type-btn', { active: loginType === 'sms' }]" 
-            @click="loginType = 'sms'"
+            :class="['login-type-btn', { active: loginType === 'phone' }]" 
+            @click="switchLoginType('phone')"
           >
             手机验证码登录
           </button>
         </div>
         
         <!-- 用户名密码登录 -->
-        <form v-if="loginType === 'password'" @submit.prevent="handlePasswordLogin">
+        <form v-if="loginType === 'username'" @submit.prevent="handleLogin" ref="loginFormRef" class="login-form">
           <div class="form-group">
             <label for="username">用户名</label>
             <input 
@@ -47,7 +47,7 @@
               id="username" 
               v-model="loginForm.username" 
               placeholder="请输入用户名"
-              required
+              :rules="loginRules.username"
             />
           </div>
           
@@ -58,7 +58,7 @@
               id="password" 
               v-model="loginForm.password" 
               placeholder="请输入密码"
-              required
+              :rules="loginRules.password"
             />
           </div>
           
@@ -69,7 +69,7 @@
                 <input 
                   type="radio" 
                   v-model="loginForm.version" 
-                  value="base" 
+                  value="BASE" 
                   name="version"
                 />
                 <span>基地版</span>
@@ -78,7 +78,7 @@
                 <input 
                   type="radio" 
                   v-model="loginForm.version" 
-                  value="non-base" 
+                  value="NON_BASE" 
                   name="version"
                 />
                 <span>非基地版</span>
@@ -104,7 +104,7 @@
         </form>
         
         <!-- 手机验证码登录 -->
-        <form v-else @submit.prevent="handleSmsLogin">
+        <form v-else @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
             <label for="phone">手机号</label>
             <input 
@@ -112,19 +112,19 @@
               id="phone" 
               v-model="loginForm.phone" 
               placeholder="请输入手机号"
-              required
+              :rules="loginRules.phone"
             />
           </div>
           
           <div class="form-group">
-            <label for="smsCode">验证码</label>
+            <label for="code">验证码</label>
             <div class="sms-code-container">
               <input 
                 type="text" 
-                id="smsCode" 
-                v-model="loginForm.smsCode" 
+                id="code" 
+                v-model="loginForm.code" 
                 placeholder="请输入验证码"
-                required
+                :rules="loginRules.code"
               />
               <button 
                 type="button" 
@@ -144,7 +144,7 @@
                 <input 
                   type="radio" 
                   v-model="loginForm.version" 
-                  value="base" 
+                  value="BASE" 
                   name="version"
                 />
                 <span>基地版</span>
@@ -153,7 +153,7 @@
                 <input 
                   type="radio" 
                   v-model="loginForm.version" 
-                  value="non-base" 
+                  value="NON_BASE" 
                   name="version"
                 />
                 <span>非基地版</span>
@@ -199,7 +199,7 @@
               <input 
                 type="text" 
                 id="reg-smsCode" 
-                v-model="registerForm.smsCode" 
+                v-model="registerForm.code" 
                 placeholder="请输入验证码"
                 required
               />
@@ -258,6 +258,9 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import { ElMessage } from 'element-plus';
+import request from '@/utils/request';
+import type { FormInstance } from 'element-plus';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -266,73 +269,257 @@ const userStore = useUserStore();
 const activeTab = ref('login');
 
 // 登录方式切换
-const loginType = ref('password');
+const loginType = ref<'username' | 'phone'>('username');
+
+// 定义登录表单类型
+interface LoginForm {
+  username: string;
+  password: string;
+  phone: string;
+  code: string;
+  version: 'BASE' | 'NON_BASE';
+  isAdmin: boolean;
+}
+
+// 定义注册表单类型
+interface RegisterForm {
+  username: string;
+  password: string;
+  confirmPassword: string;
+  phone: string;
+  code: string;
+}
 
 // 登录表单数据
-const loginForm = reactive({
+const loginForm = reactive<LoginForm>({
   username: '',
   password: '',
   phone: '',
-  smsCode: '',
-  version: 'base', // 默认选择基地版
-  isAdmin: false   // 添加管理员标志
+  code: '',
+  version: 'BASE',
+  isAdmin: false
 });
 
 // 注册表单数据
-const registerForm = reactive({
-  phone: '',
-  smsCode: '',
+const registerForm = reactive<RegisterForm>({
   username: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  phone: '',
+  code: ''
 });
 
 // 短信验证码倒计时
 const smsCountdown = ref(0);
 const regSmsCountdown = ref(0);
 
-// 发送登录短信验证码
+// 登录表单校验规则
+const loginRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]{4,16}$/, message: '用户名必须是4-16位字母、数字或下划线', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]{6,20}$/, message: '密码必须是6-20位字母、数字或下划线', trigger: 'blur' }
+  ],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { pattern: /^\d{6}$/, message: '验证码必须是6位数字', trigger: 'blur' }
+  ]
+};
+
+// 登录表单引用
+const loginFormRef = ref<FormInstance>();
+
+// 登录方法
+const handleLogin = async (event) => {
+  try {
+    // 验证表单
+    if (loginType.value === 'username') {
+      if (!loginForm.username) {
+        ElMessage.error('请输入用户名')
+        return
+      }
+      if (!loginForm.password) {
+        ElMessage.error('请输入密码')
+        return
+      }
+      if (!/^[a-zA-Z0-9_]{4,16}$/.test(loginForm.username)) {
+        ElMessage.error('用户名必须是4-16位字母、数字或下划线')
+        return
+      }
+      if (!/^[a-zA-Z0-9_]{6,20}$/.test(loginForm.password)) {
+        ElMessage.error('密码必须是6-20位字母、数字或下划线')
+        return
+      }
+    } else {
+      if (!loginForm.phone) {
+        ElMessage.error('请输入手机号')
+        return
+      }
+      if (!loginForm.code) {
+        ElMessage.error('请输入验证码')
+        return
+      }
+      if (!/^1[3-9]\d{9}$/.test(loginForm.phone)) {
+        ElMessage.error('手机号格式不正确')
+        return
+      }
+      if (!/^\d{6}$/.test(loginForm.code)) {
+        ElMessage.error('验证码必须是6位数字')
+        return
+      }
+    }
+
+    if (!loginForm.version) {
+      ElMessage.error('请选择版本')
+      return
+    }
+
+    // 构造登录请求参数
+    const loginData = {
+      isAdmin: loginForm.isAdmin,
+      version: loginForm.version
+    }
+
+    // 根据登录方式添加对应的参数
+    if (loginType.value === 'username') {
+      Object.assign(loginData, {
+        username: loginForm.username,
+        password: loginForm.password
+      })
+    } else {
+      Object.assign(loginData, {
+        phone: loginForm.phone,
+        code: loginForm.code
+      })
+    }
+
+    // 发送登录请求
+    const res = await request.post('/auth/login', loginData)
+    
+    if (res.code === 200) {
+      // 保存token和用户信息
+      localStorage.setItem('token', res.data.token)
+      localStorage.setItem('userInfo', JSON.stringify(res.data.user))
+      localStorage.setItem('isAdmin', String(loginForm.isAdmin))
+      localStorage.setItem('version', loginForm.version)
+      
+      // 更新状态管理
+      userStore.initState()
+      
+      // 显示登录成功提示
+      ElMessage.success('登录成功')
+      
+      // 跳转到仪表盘
+      router.push('/dashboard')
+    } else {
+      ElMessage.error(res.message || '登录失败')
+    }
+  } catch (error) {
+    console.error('登录失败:', error)
+    ElMessage.error(error.response?.data?.message || '登录失败，请稍后重试')
+  }
+}
+
+// 切换登录方式
+const switchLoginType = (type) => {
+  loginType.value = type
+  // 清空表单
+  loginForm.username = ''
+  loginForm.password = ''
+  loginForm.phone = ''
+  loginForm.code = ''
+}
+
+// 发送验证码
 const sendSmsCode = async () => {
-  if (!loginForm.phone) {
-    alert('请输入手机号');
+  try {
+    // 验证手机号格式
+    if (!loginForm.phone) {
+      ElMessage.error('请输入手机号')
+      return
+    }
+    if (!/^1[3-9]\d{9}$/.test(loginForm.phone)) {
+      ElMessage.error('请输入正确的手机号')
+      return
+    }
+
+    // 发送验证码请求
+    const res = await request.get('/sms/code', {
+      params: { phone: loginForm.phone }
+    })
+
+    if (res.code === 200) {
+      ElMessage.success('验证码已发送')
+      // TODO: 添加倒计时逻辑
+    } else {
+      ElMessage.error(res.message || '验证码发送失败')
+    }
+  } catch (error) {
+    console.error('验证码发送失败:', error)
+    ElMessage.error(error.response?.data?.message || '验证码发送失败，请稍后重试')
+  }
+}
+
+// 注册
+const handleRegister = async () => {
+  // 验证密码是否一致
+  if (registerForm.password !== registerForm.confirmPassword) {
+    ElMessage.error('两次输入的密码不一致');
     return;
   }
   
   try {
-    // 这里调用发送短信验证码的API
-    // await api.sendSmsCode(loginForm.phone);
+    const response = await request.post('/register', {
+      phone: registerForm.phone,
+      code: registerForm.code,
+      username: registerForm.username,
+      password: registerForm.password,
+      confirmPassword: registerForm.confirmPassword
+    });
     
-    // 模拟API调用
-    console.log('发送验证码到', loginForm.phone);
-    
-    // 开始倒计时
-    smsCountdown.value = 60;
-    const timer = setInterval(() => {
-      smsCountdown.value--;
-      if (smsCountdown.value <= 0) {
-        clearInterval(timer);
-      }
-    }, 1000);
-  } catch (error) {
-    console.error('发送验证码失败', error);
-    alert('发送验证码失败，请稍后重试');
+    if (response.code === 200) {
+      ElMessage.success('注册成功，请登录');
+      // 注册成功，切换到登录页
+      activeTab.value = 'login';
+      // 清空注册表单
+      registerForm.phone = '';
+      registerForm.code = '';
+      registerForm.username = '';
+      registerForm.password = '';
+      registerForm.confirmPassword = '';
+    } else {
+      ElMessage.error(response.message || '注册失败，请稍后重试');
+    }
+  } catch (error: any) {
+    console.error('注册失败', error);
+    ElMessage.error(error.response?.data?.message || '注册失败，请稍后重试');
   }
 };
 
 // 发送注册短信验证码
 const sendRegSmsCode = async () => {
   if (!registerForm.phone) {
-    alert('请输入手机号');
+    ElMessage.warning('请输入手机号');
+    return;
+  }
+  
+  if (!loginRules.phone[1].pattern.test(registerForm.phone)) {
+    ElMessage.warning('请输入正确的手机号格式');
     return;
   }
   
   try {
-    // 这里调用发送短信验证码的API
-    // await api.sendSmsCode(registerForm.phone);
-    
-    // 模拟API调用
-    console.log('发送验证码到', registerForm.phone);
-    
+    const response = await request.get('/sms/code', {
+      params: { phone: registerForm.phone }
+    });
+    ElMessage.success('验证码已发送');
     // 开始倒计时
     regSmsCountdown.value = 60;
     const timer = setInterval(() => {
@@ -341,96 +528,24 @@ const sendRegSmsCode = async () => {
         clearInterval(timer);
       }
     }, 1000);
-  } catch (error) {
-    console.error('发送验证码失败', error);
-    alert('发送验证码失败，请稍后重试');
+  } catch (error: any) {
+    console.error('验证码发送失败:', error);
+    ElMessage.error(error.response?.data?.message || '验证码发送失败，请稍后重试');
   }
 };
 
-// 用户名密码登录
-const handlePasswordLogin = async () => {
-  try {
-    // 这里调用登录API
-    // const response = await api.login({
-    //   username: loginForm.username,
-    //   password: loginForm.password,
-    //   version: loginForm.version
-    // });
-    
-    // 模拟API调用
-    console.log('用户名密码登录', loginForm);
-    
-    // 存储用户信息和版本信息
-    userStore.setUser({
-      username: loginForm.username,
-      version: loginForm.version,
-      role: loginForm.isAdmin ? 'admin' : 'user'  // 设置角色
-    });
-    
-    // 登录成功，跳转到首页
-    router.push('/dashboard');
-  } catch (error) {
-    console.error('登录失败', error);
-    alert('登录失败，请检查用户名和密码');
-  }
-};
-
-// 手机验证码登录
-const handleSmsLogin = async () => {
-  try {
-    // 这里调用登录API
-    // const response = await api.smsLogin({
-    //   phone: loginForm.phone,
-    //   smsCode: loginForm.smsCode,
-    //   version: loginForm.version
-    // });
-    
-    // 模拟API调用
-    console.log('手机验证码登录', loginForm);
-    
-    // 存储用户信息和版本信息
-    userStore.setUser({
-      phone: loginForm.phone,
-      version: loginForm.version,
-      role: loginForm.isAdmin ? 'admin' : 'user'  // 设置角色
-    });
-    
-    // 登录成功，跳转到首页
-    router.push('/dashboard');
-  } catch (error) {
-    console.error('登录失败', error);
-    alert('登录失败，请检查手机号和验证码');
-  }
-};
-
-// 注册
-const handleRegister = async () => {
-  // 验证密码是否一致
-  if (registerForm.password !== registerForm.confirmPassword) {
-    alert('两次输入的密码不一致');
-    return;
-  }
-  
-  try {
-    // 这里调用注册API
-    // const response = await api.register({
-    //   phone: registerForm.phone,
-    //   smsCode: registerForm.smsCode,
-    //   username: registerForm.username,
-    //   password: registerForm.password
-    // });
-    
-    // 模拟API调用
-    console.log('注册', registerForm);
-    
-    // 注册成功，切换到登录页
-    activeTab.value = 'login';
-    alert('注册成功，请登录');
-  } catch (error) {
-    console.error('注册失败', error);
-    alert('注册失败，请稍后重试');
-  }
-};
+defineExpose({
+  activeTab,
+  loginType,
+  loginForm,
+  loginFormRef,
+  handleLogin,
+  switchLoginType,
+  sendSmsCode,
+  registerForm,
+  regSmsCountdown,
+  sendRegSmsCode
+});
 </script>
 
 <style scoped>

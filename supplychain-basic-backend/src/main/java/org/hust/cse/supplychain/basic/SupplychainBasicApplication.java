@@ -1,3 +1,8 @@
+/**
+ * @author: zyk
+ * @date: 2025-03-27
+ * @description: 启动类
+ */
 package org.hust.cse.supplychain.basic;
 
 import org.springframework.boot.SpringApplication;

@@ -89,27 +89,129 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRoute } from 'vue-router';
+import { useUserStore } from '@/stores/user';
+import { ElMessage } from 'element-plus';
+import 'element-plus/dist/index.css';
 import { 
   ArrowLeftIcon, 
   UploadCloudIcon, 
   FileIcon, 
-  XIcon,
-  SparklesIcon 
+  XIcon
 } from 'lucide-vue-next';
 import ModuleViewToggle from '@/components/ModuleViewToggle.vue';
+import request from '@/utils/request';
 import '@/assets/styles/form.css';
+
+interface FileInfo {
+  id: string;
+  fileName: string;
+  fileType: string;
+  filePath: string;
+  accessUrl: string;
+  fileSize: number;
+  tenant: string;
+  uploadTime: string;
+}
+
+interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+}
+
+const route = useRoute();
+const userStore = useUserStore();
+
+// 获取业务类型
+const getBusinessType = () => {
+  const path = route.path;
+  
+  // 合同模块
+  if (path.includes('/contract/purchase')) {
+    return 'contract-purchase';
+  } else if (path.includes('/contract/sales')) {
+    return 'contract-sales';
+  } else if (path.includes('/contract/transport')) {
+    return 'contract-transport';
+  }
+  
+  // 货物模块-基地版
+  else if (path.includes('/goods/base/inbound-weight')) {
+    return 'goods-base-inbound-weight';
+  } else if (path.includes('/goods/base/inbound-quality')) {
+    return 'goods-base-inbound-quality';
+  } else if (path.includes('/goods/base/inbound-image')) {
+    return 'goods-base-inbound-image';
+  } else if (path.includes('/goods/base/outbound-weight')) {
+    return 'goods-base-outbound-weight';
+  } else if (path.includes('/goods/base/outbound-quality')) {
+    return 'goods-base-outbound-quality';
+  } else if (path.includes('/goods/base/outbound-image')) {
+    return 'goods-base-outbound-image';
+  } else if (path.includes('/goods/base/purchase-waybill')) {
+    return 'goods-base-purchase-waybill';
+  } else if (path.includes('/goods/base/sales-waybill')) {
+    return 'goods-base-sales-waybill';
+  }
+  
+  // 货物模块-非基地版
+  else if (path.includes('/goods/non-base/factory-weight')) {
+    return 'goods-nonbase-factory-weight';
+  } else if (path.includes('/goods/non-base/factory-quality')) {
+    return 'goods-nonbase-factory-quality';
+  } else if (path.includes('/goods/non-base/factory-image')) {
+    return 'goods-nonbase-factory-image';
+  } else if (path.includes('/goods/non-base/waybill')) {
+    return 'goods-nonbase-waybill';
+  }
+  
+  // 结算模块
+  else if (path.includes('/settlement/purchase')) {
+    return 'settlement-purchase';
+  } else if (path.includes('/settlement/sales')) {
+    return 'settlement-sales';
+  }
+  
+  // 资金模块
+  else if (path.includes('/finance/purchase-payment')) {
+    return 'finance-purchase-payment';
+  } else if (path.includes('/finance/sales-receipt')) {
+    return 'finance-sales-receipt';
+  } else if (path.includes('/finance/transport-payment')) {
+    return 'finance-transport-payment';
+  }
+  
+  // 发票模块
+  else if (path.includes('/invoice/purchase-in')) {
+    return 'invoice-purchase-in';
+  } else if (path.includes('/invoice/purchase-out')) {
+    return 'invoice-purchase-out';
+  } else if (path.includes('/invoice/sales')) {
+    return 'invoice-sales';
+  } else if (path.includes('/invoice/transport')) {
+    return 'invoice-transport';
+  }
+  
+  // 台账模块
+  else if (path.includes('/ledger/purchase')) {
+    return 'ledger-purchase';
+  } else if (path.includes('/ledger/sales')) {
+    return 'ledger-sales';
+  }
+  
+  return 'unknown';
+};
 
 const props = defineProps<{
   title: string;
   backRouteName: string;
   uploadRouteName: string;
   manageRouteName: string;
-  onSubmit: (formData: { name: string; file: File }) => Promise<any>;
 }>();
 
 const emit = defineEmits<{
   (e: 'upload-success', result: any): void;
-  (e: 'ai-auto-fill'): void;
   (e: 'cancel-upload'): void;
 }>();
 
@@ -137,12 +239,17 @@ const handleFileChange = (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files && input.files[0]) {
     formData.value.file = input.files[0];
+    // 自动填充文件名（去掉扩展名）
+    const fileName = input.files[0].name;
+    const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+    formData.value.name = nameWithoutExt;
   }
 };
 
 // 移除文件
 const removeFile = () => {
   formData.value.file = null;
+  formData.value.name = ''; // 清空文件名
   if (fileInput.value) {
     fileInput.value.value = '';
   }
@@ -150,24 +257,60 @@ const removeFile = () => {
 
 // 处理表单提交
 const handleSubmit = async () => {
-  if (!formData.value.name) {
-    alert('请输入文件名称');
-    return;
-  }
-  if (!formData.value.file) {
-    alert('请选择要上传的文件');
-    return;
-  }
-
   try {
-    const result = await props.onSubmit({
-      name: formData.value.name,
-      file: formData.value.file
+    if (!formData.value.file) {
+      ElMessage.warning('请选择要上传的文件');
+      return;
+    }
+
+    if (!formData.value.name) {
+      ElMessage.warning('请输入文件名称');
+      return;
+    }
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('file', formData.value.file);
+    formDataToSend.append('tenant', userStore.version);
+    formDataToSend.append('type', getBusinessType());
+    formDataToSend.append('fileName', formData.value.name);
+
+    console.log('开始上传文件:', {
+      fileName: formData.value.name,
+      originalFileName: formData.value.file.name,
+      fileSize: formData.value.file.size,
+      tenant: userStore.version,
+      type: getBusinessType()
     });
-    emit('upload-success', result);
-    nextStep();
-  } catch (error) {
-    console.error('上传失败：', error);
+
+    console.log('发送请求...');
+    const response = await request.post<ApiResponse<FileInfo>>('/files/upload', formDataToSend, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    console.log('收到响应:', response);
+    
+    if (response.data.code === 200 && response.data.data) {
+      console.log('文件上传成功:', response.data.data);
+      ElMessage.success('上传成功');
+      emit('upload-success', {
+        ...response.data.data,
+        name: formData.value.name,
+        type: getBusinessType()
+      });
+      nextStep();
+    } else {
+      console.error('响应数据为空或状态码错误:', response.data);
+      throw new Error(response.data.message || '上传失败：服务器返回数据为空');
+    }
+  } catch (error: any) {
+    console.error('上传失败，错误详情:', {
+      message: error.message,
+      response: error.response,
+      request: error.request
+    });
+    // 错误消息已经在request.ts中处理，这里不需要再显示
   }
 };
 
@@ -184,15 +327,6 @@ const prevStep = () => {
     currentStep.value--;
   }
 }
-
-// AI自动识别
-const handleAIAutoFill = async () => {
-  try {
-    emit('ai-auto-fill');
-  } catch (error) {
-    console.error('AI识别失败：', error);
-  }
-};
 
 // 跳转到指定步骤
 const goToStep = (index: number) => {

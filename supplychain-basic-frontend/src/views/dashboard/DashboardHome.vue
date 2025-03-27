@@ -25,7 +25,7 @@
     <div class="module">
       <h3 class="module-title">货物模块</h3>
       <div class="module-grid">
-        <template v-if="user.version === 'base'">
+        <template v-if="version === 'BASE'">
           <router-link :to="{ name: 'InboundWeight' }" class="module-card">
             <ScaleIcon class="card-icon" />
             <span class="card-title">入库过磅单</span>
@@ -181,13 +181,11 @@ import {
   DollarSignIcon,
   BookIcon,
   ClipboardCheckIcon,
-  ImageIcon,
-  Database as DatabaseIcon,
-  Shield as ShieldIcon
+  ImageIcon
 } from 'lucide-vue-next';
 
 const userStore = useUserStore();
-const user = computed(() => userStore.user);
+const version = computed(() => userStore.version);
 </script>
 
 <style scoped>
