@@ -10,18 +10,55 @@
           </div>
           <div class="status-info">
             <h3>{{ isVerified ? '已完成认证' : '未完成认证' }}</h3>
-            <p>{{ isVerified ? '您的企业已完成存证主体认证，可以进行区块链存证操作。' : '请完成企业认证，以便在区块链上进行可信存证。' }}</p>
+            <p>{{ isVerified ? '您的账户已完成存证主体认证，可以进行区块链存证操作。' : '请完成认证，以便在区块链上进行可信存证。' }}</p>
           </div>
           <button v-if="!isVerified" class="verify-btn" @click="startVerification">
             立即认证
           </button>
-          <button v-else class="view-btn" @click="viewCertificate">
-            查看证书
+          <button v-else class="reverify-btn" @click="startVerification">
+            重新认证
           </button>
         </div>
       </div>
       
-      <div class="verification-steps" v-if="!isVerified">
+      <div v-if="isVerified" class="auth-info">
+        <h3 class="info-title">认证信息</h3>
+        
+        <div class="info-card">
+          <div class="info-item">
+            <span class="label">认证类型：</span>
+            <span class="value">{{ getAuthTypeName(authInfo.type) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">认证方式：</span>
+            <span class="value">{{ getAuthMethodName(authInfo.method) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">认证时间：</span>
+            <span class="value">{{ authInfo.verificationTime }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">认证有效期：</span>
+            <span class="value">{{ authInfo.validUntil }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">区块链存证地址：</span>
+            <div class="value-container">
+              <span class="value">{{ authInfo.blockchainAddress }}</span>
+              <button class="action-btn" @click="copyAddress">复制</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="showAuthForm" class="auth-form-container">
+        <AuthenticationForm
+          @submit="handleAuthSubmit"
+          @cancel="showAuthForm = false"
+        />
+      </div>
+      
+      <div v-if="!showAuthForm" class="verification-steps">
         <h3 class="steps-title">认证流程</h3>
         
         <div class="step-list">
@@ -30,40 +67,6 @@
             <div class="step-content">
               <h4>{{ step.title }}</h4>
               <p>{{ step.description }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="auth-info" v-if="isVerified">
-        <h3 class="info-title">认证信息</h3>
-        
-        <div class="info-card">
-          <div class="info-item">
-            <span class="label">企业名称：</span>
-            <span class="value">{{ companyInfo.name }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">统一社会信用代码：</span>
-            <span class="value">{{ companyInfo.creditCode }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">法定代表人：</span>
-            <span class="value">{{ companyInfo.legalPerson }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">认证时间：</span>
-            <span class="value">{{ companyInfo.verificationTime }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">认证有效期：</span>
-            <span class="value">{{ companyInfo.validUntil }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">区块链存证地址：</span>
-            <div class="value-container">
-              <span class="value">{{ companyInfo.blockchainAddress }}</span>
-              <button class="action-btn" @click="copyAddress">复制</button>
             </div>
           </div>
         </div>
@@ -99,39 +102,46 @@
     FileTextIcon,
     AwardIcon
   } from 'lucide-vue-next';
+  import AuthenticationForm from '@/components/forms/AuthenticationForm.vue';
   
   // 认证状态
   const isVerified = ref(true);
   
+  // 认证信息
+  const authInfo = ref({
+    type: 'natural',
+    method: 'biometric',
+    verificationTime: '2023-06-15 14:30:22',
+    validUntil: '2024-06-15',
+    blockchainAddress: '0x7a58c0be72be218b41c608b7fe7c5bb630736c71'
+  });
+  
+  // 显示认证表单
+  const showAuthForm = ref(false);
+  
   // 认证步骤
   const verificationSteps = [
     {
-      title: '提交企业信息',
-      description: '填写企业基本信息，包括企业名称、统一社会信用代码、法定代表人等。'
+      title: '选择认证类型',
+      description: '根据您的身份选择相应的认证类型：自然人、个体工商户或企业法人。'
     },
     {
-      title: '上传证明材料',
-      description: '上传营业执照、法定代表人身份证等证明材料。'
+      title: '填写认证信息',
+      description: '根据选择的认证类型，填写相应的认证信息，包括基本信息、证件信息等。'
     },
     {
-      title: '等待审核',
-      description: '系统将在1-3个工作日内完成审核，审核结果将通过系统消息通知。'
+      title: '选择认证方式',
+      description: '根据认证类型选择相应的认证方式，包括生物特征识别、国家统一身份认证平台或证件证照对比。'
+    },
+    {
+      title: '提交认证',
+      description: '确认信息无误后提交认证申请，系统将在1-3个工作日内完成审核。'
     },
     {
       title: '完成认证',
-      description: '审核通过后，系统将自动为企业生成区块链存证证书。'
+      description: '审核通过后，系统将自动为您生成区块链存证证书。'
     }
   ];
-  
-  // 企业信息
-  const companyInfo = ref({
-    name: '示例科技有限公司',
-    creditCode: '91110105MA00B7GT2R',
-    legalPerson: '张三',
-    verificationTime: '2023-05-20 10:30:45',
-    validUntil: '2024-05-20',
-    blockchainAddress: '0x8f5b2b7c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a'
-  });
   
   // 认证优势
   const benefits = [
@@ -157,19 +167,61 @@
     }
   ];
   
-  // 开始认证
-  const startVerification = () => {
-    alert('认证功能待实现');
+  // 获取认证类型名称
+  const getAuthTypeName = (type: string) => {
+    const types: Record<string, string> = {
+      natural: '自然人',
+      individual: '个体工商户',
+      enterprise: '企业法人'
+    };
+    return types[type] || type;
   };
   
-  // 查看证书
-  const viewCertificate = () => {
-    alert('查看证书功能待实现');
+  // 获取认证方式名称
+  const getAuthMethodName = (method: string) => {
+    const methods: Record<string, string> = {
+      biometric: '生物特征识别',
+      national: '国家统一身份认证平台',
+      document: '证件证照对比'
+    };
+    return methods[method] || method;
+  };
+  
+  // 开始认证
+  const startVerification = () => {
+    showAuthForm.value = true;
+  };
+  
+  // 处理认证提交
+  const handleAuthSubmit = async (data: any) => {
+    try {
+      // TODO: 调用认证API
+      console.log('认证数据：', data);
+      
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 更新认证状态和信息
+      isVerified.value = true;
+      authInfo.value = {
+        ...authInfo.value,
+        type: data.authType,
+        method: data.authMethod,
+        verificationTime: new Date().toLocaleString(),
+        validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString()
+      };
+      
+      showAuthForm.value = false;
+      alert('认证申请已提交，请等待审核。');
+    } catch (error) {
+      console.error('认证提交失败：', error);
+      alert('认证提交失败，请重试。');
+    }
   };
   
   // 复制地址
   const copyAddress = () => {
-    navigator.clipboard.writeText(companyInfo.value.blockchainAddress)
+    navigator.clipboard.writeText(authInfo.value.blockchainAddress)
       .then(() => {
         alert('地址已复制到剪贴板');
       })
@@ -242,7 +294,8 @@
     margin: 0;
   }
   
-  .verify-btn, .view-btn {
+  .verify-btn,
+  .reverify-btn {
     padding: 8px 16px;
     border: none;
     border-radius: 4px;
@@ -260,66 +313,13 @@
     background-color: #ffa940;
   }
   
-  .view-btn {
+  .reverify-btn {
     background-color: #52c41a;
     color: white;
   }
   
-  .view-btn:hover {
+  .reverify-btn:hover {
     background-color: #73d13d;
-  }
-  
-  .verification-steps {
-    margin-bottom: 24px;
-  }
-  
-  .steps-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #333;
-  }
-  
-  .step-list {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 16px;
-  }
-  
-  .step-item {
-    display: flex;
-    margin-bottom: 16px;
-  }
-  
-  .step-item:last-child {
-    margin-bottom: 0;
-  }
-  
-  .step-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background-color: #1890ff;
-    color: white;
-    border-radius: 50%;
-    font-weight: 600;
-    margin-right: 12px;
-    flex-shrink: 0;
-  }
-  
-  .step-content h4 {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #333;
-  }
-  
-  .step-content p {
-    color: #666;
-    margin: 0;
-    font-size: 14px;
   }
   
   .auth-info {
@@ -378,6 +378,66 @@
   
   .action-btn:hover {
     background-color: #e0e0e0;
+  }
+  
+  .auth-form-container {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+  }
+  
+  .verification-steps {
+    margin-bottom: 24px;
+  }
+  
+  .steps-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+  }
+  
+  .step-list {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  
+  .step-item {
+    display: flex;
+    margin-bottom: 16px;
+  }
+  
+  .step-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: #1890ff;
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  
+  .step-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #333;
+  }
+  
+  .step-content p {
+    color: #666;
+    margin: 0;
+    font-size: 14px;
   }
   
   .auth-benefits {
