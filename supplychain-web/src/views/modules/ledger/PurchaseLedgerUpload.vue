@@ -13,8 +13,8 @@
           <div class="step-label">{{ step }}</div>
         </div>
       </div>
-    </div>
-
+      </div>
+      
     <!-- 内容区域 -->
     <div class="content-area">
       <!-- 采购合同选择 -->
@@ -43,10 +43,10 @@
                 >
                   ✕
                 </i>
-              </div>
-            </div>
           </div>
-
+          </div>
+      </div>
+      
           <!-- 搜索结果表格 -->
           <div class="search-results" v-if="filteredContracts.length > 0">
             <table class="data-table">
@@ -114,9 +114,9 @@
               </button>
             </div>
           </div>
-        </div>
-      </div>
-
+            </div>
+          </div>
+          
       <!-- 运输信息选择 -->
       <div v-if="currentStep === 1" class="step-content">
         <h2 class="step-title">选择运输信息</h2>
@@ -525,8 +525,8 @@
                   ✕
                 </i>
               </div>
-            </div>
-          </div>
+              </div>
+              </div>
           <!-- 转账记录列表 -->
           <div class="list-container">
             <div 
@@ -562,9 +562,9 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
+            </div>
+          </div>
+          
       <!-- 已选信息展示区 -->
       <div class="selected-info" v-if="hasSelectedItems">
         <div class="selected-info-header" @click="toggleSelectedInfo">
@@ -599,9 +599,9 @@
                   @click="selectContract(null)"
                 >
                   取消选择
-                </button>
-              </div>
-            </div>
+            </button>
+          </div>
+        </div>
 
             <!-- 运输信息 -->
             <div v-if="selectedWeight" class="list-item selected">
@@ -825,11 +825,11 @@
       >
         提交
       </button>
+      </div>
     </div>
-  </div>
-</template>
-
-<script lang="ts" setup>
+  </template>
+  
+  <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import '@/assets/styles/form.css';
 import '@/assets/styles/ledger.css';
@@ -1266,6 +1266,6 @@ const scrollToTop = () => {
 
 <style scoped>
 /* 移除所有样式，因为已经移到 ledger.css 中 */
-</style>
+  </style>
   
   

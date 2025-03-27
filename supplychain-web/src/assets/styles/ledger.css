@@ -383,4 +383,245 @@ mark {
   background-color: #fff3cd;
   padding: 0 2px;
   border-radius: 2px;
+}
+
+/* 台账管理页面通用样式 */
+.ledger-manage {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.group-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.label {
+  color: #666;
+}
+
+.select-input {
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.search-box {
+  width: 300px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: #999;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 35px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #1890ff;
+}
+
+.clear-icon {
+  position: absolute;
+  right: 10px;
+  color: #999;
+  cursor: pointer;
+}
+
+.clear-icon:hover {
+  color: #666;
+}
+
+.ledger-group {
+  margin-bottom: 30px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.group-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.group-title {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.group-summary {
+  display: flex;
+  gap: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 20px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table th {
+  background: #fafafa;
+  font-weight: 500;
+  color: #666;
+}
+
+.data-table tr:hover {
+  background: #f5f5f5;
+}
+
+.action-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.action-btn:last-child {
+  margin-right: 0;
+}
+
+.action-btn.primary {
+  background: #1890ff;
+  color: #fff;
+  border: none;
+}
+
+.action-btn.primary:hover {
+  background: #40a9ff;
+}
+
+.action-btn.secondary {
+  background: #fff;
+  color: #666;
+  border: 1px solid #d9d9d9;
+}
+
+.action-btn.secondary:hover {
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.page-btn {
+  padding: 6px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+}
+
+.page-btn:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.page-btn:not(:disabled):hover {
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+.page-info {
+  color: #666;
+}
+
+/* 台账父组件通用样式 */
+.ledger-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ledger-top-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ledger-page-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+}
+
+.ledger-action-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.ledger-action-btn {
+  padding: 8px 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.ledger-action-btn:hover {
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+.ledger-action-btn.active {
+  background: #1890ff;
+  color: #fff;
+  border-color: #1890ff;
+}
+
+.ledger-content-area {
+  flex: 1;
+  padding: 20px;
+  background: #f0f2f5;
+  overflow: auto;
 } 

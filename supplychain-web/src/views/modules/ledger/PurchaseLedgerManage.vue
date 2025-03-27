@@ -1,230 +1,380 @@
 <template>
-  <DocumentManageTemplate
-    title="采购台账管理"
-    :columns="columns"
-    backRouteName="DashboardHome"
-    uploadRouteName="/dashboard/ledger/purchase/upload"
-    manageRouteName="/dashboard/ledger/purchase/manage"
-    :documents="documents"
-    :currentPage="currentPage"
-    :totalPages="totalPages"
-    :searchQuery="searchQuery"
-    :startDate="startDate"
-    :endDate="endDate"
-    :statusFilter="statusFilter"
-    @search="searchLedgers"
-    @reset="resetFilters"
-    @view="viewLedger"
-    @edit="editLedger"
-    @delete="deleteLedger"
-    @page-change="handlePageChange"
-  />
+  <div class="ledger-manage">
+    <!-- 顶部操作栏 -->
+    <div class="top-actions">
+      <div class="group-selector">
+        <span class="label">分组方式：</span>
+        <select v-model="groupBy" class="select-input">
+          <option value="measurementNo">按计量号组合</option>
+          <option value="settlement">按结算单组合</option>
+          <option value="invoice">按发票组合</option>
+          <option value="transferRecord">按转账记录组合</option>
+        </select>
+      </div>
+      <div class="search-box">
+        <div class="search-input-wrapper">
+          <i class="search-icon">🔍</i>
+          <input 
+            type="text" 
+            v-model="searchKey"
+            placeholder="搜索台账信息"
+            class="search-input"
+            @keyup.enter="handleSearch"
+            @input="handleSearchInput"
+          />
+          <i 
+            v-if="searchKey" 
+            class="clear-icon"
+            @click="clearSearch"
+          >
+            ✕
+          </i>
+        </div>
+      </div>
+    </div>
+
+    <!-- 台账列表 -->
+    <div class="ledger-list">
+      <div v-for="group in groupedLedgers" :key="group.key" class="ledger-group">
+        <!-- 分组标题 -->
+        <div class="group-header">
+          <h3 class="group-title">{{ getGroupTitle(group.key) }}</h3>
+          <div class="group-summary">
+            <span>共 {{ group.items.length }} 条记录</span>
+            <span>总金额：{{ calculateGroupTotal(group.items) }}</span>
+          </div>
+        </div>
+
+        <!-- 分组内容 -->
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>采购合同</th>
+              <th>过磅单</th>
+              <th>质检单</th>
+              <th>运单</th>
+              <th>采购结算单</th>
+              <th>发票</th>
+              <th>转账记录</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="ledger in group.items" :key="ledger.id">
+              <td>{{ ledger.contract?.contractNo }}</td>
+              <td>{{ ledger.weight?.measurementNo }}</td>
+              <td>{{ ledger.quality?.measurementNo }}</td>
+              <td>{{ ledger.waybill?.name }}</td>
+              <td>{{ ledger.settlement?.name }}</td>
+              <td>{{ ledger.invoice?.name }}</td>
+              <td>{{ ledger.transferRecord?.name }}</td>
+              <td>
+                <button class="action-btn primary" @click="viewDetail(ledger)">
+                  查看
+                </button>
+                <button class="action-btn secondary" @click="editLedger(ledger)">
+                  编辑
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination">
+      <button 
+        class="page-btn"
+        :disabled="currentPage === 1"
+        @click="currentPage--"
+      >
+        上一页
+      </button>
+      <span class="page-info">
+        第 {{ currentPage }} 页 / 共 {{ totalPages }} 页
+      </span>
+      <button 
+        class="page-btn"
+        :disabled="currentPage === totalPages"
+        @click="currentPage++"
+      >
+        下一页
+      </button>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import DocumentManageTemplate from '@/components/templates/DocumentManageTemplate.vue';
+import { ref, computed } from 'vue';
+import '@/assets/styles/ledger.css';
 
-const searchQuery = ref('');
-const startDate = ref('');
-const endDate = ref('');
-const statusFilter = ref('');
+// 分组方式
+const groupBy = ref('measurementNo');
+
+// 搜索关键词
+const searchKey = ref('');
+
+// 当前页码
 const currentPage = ref(1);
-const totalPages = ref(5);
+const pageSize = 10;
 
-const columns = [
-  {
-    key: 'ledgerNo',
-    label: '台账编号'
-  },
-  {
-    key: 'contractNo',
-    label: '合同编号'
-  },
-  {
-    key: 'supplier',
-    label: '供应商名称'
-  },
-  {
-    key: 'businessDate',
-    label: '业务日期'
-  },
-  {
-    key: 'businessType',
-    label: '业务类型',
-    format: (value: string) => getBusinessTypeText(value)
-  },
-  {
-    key: 'goodsName',
-    label: '货物名称'
-  },
-  {
-    key: 'specification',
-    label: '规格型号'
-  },
-  {
-    key: 'quantity',
-    label: '数量',
-    format: (value: number) => value.toLocaleString()
-  },
-  {
-    key: 'unit',
-    label: '单位'
-  },
-  {
-    key: 'unitPrice',
-    label: '单价(元)',
-    format: (value: number) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  },
-  {
-    key: 'totalAmount',
-    label: '总金额(元)',
-    format: (value: number) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  },
-  {
-    key: 'paymentStatus',
-    label: '付款状态',
-    format: (value: string) => getPaymentStatusText(value),
-    class: (value: string) => `payment-status-badge ${value}`
-  },
-  {
-    key: 'deliveryStatus',
-    label: '交货状态',
-    format: (value: string) => getDeliveryStatusText(value),
-    class: (value: string) => `delivery-status-badge ${value}`
-  }
-];
-
-const documents = ref([
+// 模拟台账数据
+const ledgers = ref([
   {
     id: 1,
-    name: '2024年1月采购台账',
-    type: 'purchase-ledger',
-    uploadTime: '2024-01-20 14:30',
-    ledgerNo: 'PL-2024001',
-    contractNo: 'PC-2024001',
-    supplier: '示例供应商',
-    businessDate: '2024-01-15',
-    businessType: 'purchase',
-    goodsName: '钢材',
-    specification: 'Q235 20*2000*6000',
-    quantity: 500,
-    unit: '吨',
-    unitPrice: 3000,
-    totalAmount: 1500000,
-    taxRate: 13,
-    taxAmount: 195000,
-    paymentStatus: 'unpaid',
-    deliveryStatus: 'undelivered'
+    contract: {
+      contractNo: 'PC-2024-001',
+      contractName: '2024年第一季度采购合同'
+    },
+    weight: {
+      measurementNo: 'WB-2024-001',
+      name: '过磅单-2024-001'
+    },
+    quality: {
+      measurementNo: 'QZ-2024-001',
+      name: '质检单-2024-001'
+    },
+    waybill: {
+      name: '运单-2024-001',
+      transportMethod: '公路运输'
+    },
+    settlement: {
+      name: '采购结算单-2024-001',
+      amount: '100000.00'
+    },
+    invoice: {
+      name: '采购发票-2024-001',
+      amount: '100000.00'
+    },
+    transferRecord: {
+      name: '转账记录-2024-001',
+      amount: '100000.00'
+    }
   }
 ]);
 
-const getBusinessTypeText = (type: string): string => {
-  switch (type) {
-    case 'purchase': return '采购入库';
-    case 'return': return '采购退货';
-    case 'adjustment': return '价格调整';
-    default: return '未知';
-  }
-};
+// 过滤后的数据
+const filteredLedgers = computed(() => {
+  if (!searchKey.value) return ledgers.value;
+  const key = searchKey.value.toLowerCase();
+  return ledgers.value.filter(ledger => 
+    ledger.contract?.contractNo.toLowerCase().includes(key) ||
+    ledger.weight?.measurementNo.toLowerCase().includes(key) ||
+    ledger.quality?.measurementNo.toLowerCase().includes(key) ||
+    ledger.waybill?.name.toLowerCase().includes(key) ||
+    ledger.settlement?.name.toLowerCase().includes(key) ||
+    ledger.invoice?.name.toLowerCase().includes(key) ||
+    ledger.transferRecord?.name.toLowerCase().includes(key)
+  );
+});
 
-const getPaymentStatusText = (status: string): string => {
-  switch (status) {
-    case 'unpaid': return '未付款';
-    case 'partialPaid': return '部分付款';
-    case 'paid': return '已付款';
-    default: return '未知';
-  }
-};
-
-const getDeliveryStatusText = (status: string): string => {
-  switch (status) {
-    case 'undelivered': return '未交货';
-    case 'partialDelivered': return '部分交货';
-    case 'delivered': return '已交货';
-    default: return '未知';
-  }
-};
-
-const searchLedgers = () => {
-  console.log('搜索条件:', {
-    query: searchQuery.value,
-    startDate: startDate.value,
-    endDate: endDate.value,
-    status: statusFilter.value
+// 分组后的数据
+const groupedLedgers = computed(() => {
+  const groups: { [key: string]: any[] } = {};
+  
+  filteredLedgers.value.forEach(ledger => {
+    let key = '';
+    switch (groupBy.value) {
+      case 'measurementNo':
+        key = ledger.weight?.measurementNo || ledger.quality?.measurementNo || '未分组';
+        break;
+      case 'settlement':
+        key = ledger.settlement?.name || '未分组';
+        break;
+      case 'invoice':
+        key = ledger.invoice?.name || '未分组';
+        break;
+      case 'transferRecord':
+        key = ledger.transferRecord?.name || '未分组';
+        break;
+    }
+    
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(ledger);
   });
-};
+  
+  return Object.entries(groups).map(([key, items]) => ({
+    key,
+    items
+  }));
+});
 
-const resetFilters = () => {
-  searchQuery.value = '';
-  startDate.value = '';
-  endDate.value = '';
-  statusFilter.value = '';
-};
-
-const viewLedger = (ledger: any) => {
-  console.log('查看台账:', ledger);
-};
-
-const editLedger = (ledger: any) => {
-  console.log('编辑台账:', ledger);
-};
-
-const deleteLedger = (ledger: any) => {
-  if (confirm(`确定要删除台账 ${ledger.ledgerNo} 吗？`)) {
-    console.log('删除台账:', ledger);
+// 获取分组标题
+const getGroupTitle = (key: string) => {
+  switch (groupBy.value) {
+    case 'measurementNo':
+      return `计量号：${key}`;
+    case 'settlement':
+      return `结算单：${key}`;
+    case 'invoice':
+      return `发票：${key}`;
+    case 'transferRecord':
+      return `转账记录：${key}`;
+    default:
+      return key;
   }
 };
 
-const handlePageChange = (page: number) => {
-  currentPage.value = page;
-  console.log('切换到页面:', page);
+// 计算分组总金额
+const calculateGroupTotal = (items: any[]) => {
+  return items.reduce((sum, item) => {
+    return sum + (parseFloat(item.settlement?.amount || 0));
+  }, 0).toFixed(2);
+};
+
+// 总页数
+const totalPages = computed(() => {
+  return Math.ceil(filteredLedgers.value.length / pageSize);
+});
+
+// 搜索方法
+const handleSearch = () => {
+  currentPage.value = 1;
+};
+
+// 搜索输入处理
+const handleSearchInput = () => {
+  currentPage.value = 1;
+};
+
+// 清除搜索
+const clearSearch = () => {
+  searchKey.value = '';
+  currentPage.value = 1;
+};
+
+// 查看详情
+const viewDetail = (ledger: any) => {
+  console.log('查看台账详情：', ledger);
+  // TODO: 实现查看详情功能
+};
+
+// 编辑台账
+const editLedger = (ledger: any) => {
+  console.log('编辑台账：', ledger);
+  // TODO: 实现编辑功能
 };
 </script>
 
 <style scoped>
-:deep(.payment-status-badge) {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
+.ledger-manage {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.group-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.label {
+  color: #666;
+}
+
+.select-input {
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 14px;
+  min-width: 150px;
 }
 
-:deep(.payment-status-badge.unpaid) {
-  background-color: #ffebee;
-  color: #c62828;
+.search-box {
+  width: 300px;
 }
 
-:deep(.payment-status-badge.partialPaid) {
-  background-color: #fff3e0;
-  color: #ef6c00;
+.ledger-group {
+  margin-bottom: 30px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-:deep(.payment-status-badge.paid) {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+.group-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-:deep(.delivery-status-badge) {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
+.group-title {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.group-summary {
+  display: flex;
+  gap: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 20px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.data-table th {
+  background: #fafafa;
+  font-weight: 500;
+  color: #666;
+}
+
+.data-table tr:hover {
+  background: #f5f5f5;
+}
+
+.action-btn {
+  padding: 4px 8px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  cursor: pointer;
+  margin-right: 8px;
 }
 
-:deep(.delivery-status-badge.undelivered) {
-  background-color: #e3f2fd;
-  color: #1565c0;
+.action-btn:last-child {
+  margin-right: 0;
 }
 
-:deep(.delivery-status-badge.partialDelivered) {
-  background-color: #fff3e0;
-  color: #ef6c00;
+.action-btn.primary {
+  background: #1890ff;
+  color: #fff;
+  border: none;
 }
 
-:deep(.delivery-status-badge.delivered) {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+.action-btn.primary:hover {
+  background: #40a9ff;
+}
+
+.action-btn.secondary {
+  background: #fff;
+  color: #666;
+  border: 1px solid #d9d9d9;
+}
+
+.action-btn.secondary:hover {
+  color: #1890ff;
+  border-color: #1890ff;
 }
 </style>
   
