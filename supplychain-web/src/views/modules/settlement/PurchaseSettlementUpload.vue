@@ -64,7 +64,7 @@
           
           <div class="array-items">
             <div class="array-header">
-              <h4 class="array-title">结算明细列表</h4>
+              <h4 class="array-title"></h4>
               <button type="button" class="add-item-btn" @click="addDetail">
                 <PlusIcon class="btn-icon" />
                 添加明细

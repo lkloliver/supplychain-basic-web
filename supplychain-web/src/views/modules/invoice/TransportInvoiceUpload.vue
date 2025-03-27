@@ -1,108 +1,190 @@
 <template>
-  <DocumentUploadTemplate
-    title="运输发票上传"
-    detailsTitle="发票详情"
-    backRouteName="DashboardHome"
-    uploadRouteName="/dashboard/invoice/transport/upload"
-    manageRouteName="/dashboard/invoice/transport/manage"
-    :detailFields="detailFields"
-    @submit="handleSubmit"
-    @recognize="handleRecognize"
-  />
+  <div class="contract-upload">
+    <DocumentUploadTemplate
+      title="运输收票上传"
+      backRouteName="DashboardHome"
+      uploadRouteName="/dashboard/invoice/transport/upload"
+      manageRouteName="/dashboard/invoice/transport/manage"
+      :onSubmit="handleFileUpload"
+      @upload-success="handleUploadSuccess"
+      @cancel-upload="handleCancelUpload"
+      ref="templateRef"
+    >
+      <!-- 详情信息表单 -->
+      <form @submit.prevent="handleDetailSubmit" class="form">
+        <!-- 基本信息 -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">托运方名称</label>
+            <input 
+              v-model="detailForm.shipperName" 
+              type="text" 
+              placeholder="请输入托运方名称"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">托运方纳税人识别号</label>
+            <input 
+              v-model="detailForm.shipperTaxNo" 
+              type="text" 
+              placeholder="请输入托运方纳税人识别号"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">承运方名称</label>
+            <input 
+              v-model="detailForm.carrierName" 
+              type="text" 
+              placeholder="请输入承运方名称"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">承运方纳税人识别号</label>
+            <input 
+              v-model="detailForm.carrierTaxNo" 
+              type="text" 
+              placeholder="请输入承运方纳税人识别号"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">金额(元)</label>
+            <input 
+              v-model="detailForm.amount" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入金额"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">税率(%)</label>
+            <input 
+              v-model="detailForm.taxRate" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入税率"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">税额(元)</label>
+            <input 
+              v-model="detailForm.taxAmount" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入税额"
+              class="form-input"
+            />
+          </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="form-actions">
+          <button type="button" class="action-btn secondary" @click="handleAIAutoFill">
+            <SparklesIcon class="btn-icon" />
+            AI自动识别
+          </button>
+          <button type="submit" class="action-btn primary">
+            提交详情信息
+          </button>
+        </div>
+      </form>
+    </DocumentUploadTemplate>
+  </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { SparklesIcon } from 'lucide-vue-next';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
+import '@/assets/styles/form.css';
 
-const router = useRouter();
+interface DetailForm {
+  shipperName: string;
+  shipperTaxNo: string;
+  carrierName: string;
+  carrierTaxNo: string;
+  amount: number;
+  taxRate: number;
+  taxAmount: number;
+}
 
-// 定义表单字段
-const detailFields = [
-  {
-    key: 'invoiceNo',
-    label: '发票编号',
-    type: 'text',
-    placeholder: '请输入发票编号'
-  },
-  {
-    key: 'transporter',
-    label: '运输商',
-    type: 'text',
-    placeholder: '请输入运输商'
-  },
-  {
-    key: 'contractNo',
-    label: '合同编号',
-    type: 'text',
-    placeholder: '请输入合同编号'
-  },
-  {
-    key: 'amount',
-    label: '发票金额',
-    type: 'number',
-    placeholder: '请输入发票金额'
-  },
-  {
-    key: 'taxRate',
-    label: '税率',
-    type: 'number',
-    placeholder: '请输入税率'
-  },
-  {
-    key: 'taxAmount',
-    label: '税额',
-    type: 'number',
-    placeholder: '请输入税额'
-  },
-  {
-    key: 'invoiceDate',
-    label: '开票日期',
-    type: 'date'
-  },
-  {
-    key: 'remark',
-    label: '备注',
-    type: 'textarea',
-    placeholder: '请输入备注信息',
-    rows: 3
+// 表单数据
+const detailForm = ref<DetailForm>({
+  shipperName: '',
+  shipperTaxNo: '',
+  carrierName: '',
+  carrierTaxNo: '',
+  amount: 0,
+  taxRate: 0,
+  taxAmount: 0
+});
+
+// 处理文件上传
+const handleFileUpload = async (formData: {name: string, file: File}) => {
+  const uploadData = new FormData();
+  uploadData.append('name', formData.name);
+  uploadData.append('file', formData.file);
+  uploadData.append('fileType', 'transport_invoice');
+
+  try {
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = { 
+      success: true, 
+      fileId: 'mock_file_' + Date.now(),
+      data: {
+        name: formData.name,
+        fileType: 'transport_invoice'
+      }
+    };
+    return result;
+  } catch (error) {
+    throw error;
   }
-];
+}
 
-// 处理AI识别
-const handleRecognize = async (file: File) => {
-  console.log('正在识别文档...', file.name);
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟识别结果
-      const result = {
-        invoiceNo: 'TI-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        transporter: '自动识别运输商',
-        contractNo: 'TC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        amount: Math.floor(Math.random() * 100000).toString(),
-        taxRate: '9%',
-        taxAmount: Math.floor(Math.random() * 10000).toString(),
-        invoiceDate: new Date().toISOString().split('T')[0],
-        remark: '自动识别备注'
-      };
-      
-      alert('文档识别完成');
-      resolve(result);
-    }, 1500);
-  });
-};
+// 处理上传成功
+const handleUploadSuccess = (result: any) => {
+  if (result.success && result.fileId) {
+    // 文件上传成功后，模板组件会自动切换到下一步
+  }
+}
 
-// 处理提交
-const handleSubmit = (formData: { name: string, file: File, details: Record<string, any> }) => {
-  console.log('提交运输发票数据', formData);
-  
-  // 模拟上传成功
-  alert('上传成功');
-  
-  // 上传成功后跳转到管理页面
-  router.push({ name: 'TransportInvoiceManage' });
+// 处理取消上传
+const handleCancelUpload = async () => {
+  // TODO: 调用删除接口
+  console.log('取消上传');
+}
+
+// AI自动识别
+const handleAIAutoFill = async () => {
+  try {
+    // TODO: 调用AI识别接口
+    console.log('开始AI自动识别...');
+  } catch (error) {
+    console.error('AI识别失败：', error);
+  }
+}
+
+// 提交详情信息
+const handleDetailSubmit = async () => {
+  try {
+    // TODO: 调用API保存详情信息
+    console.log('提交详情信息：', detailForm.value);
+  } catch (error) {
+    console.error('提交详情信息失败：', error);
+  }
 };
 </script>
   

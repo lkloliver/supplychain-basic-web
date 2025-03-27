@@ -1,112 +1,204 @@
 <template>
-  <DocumentUploadTemplate
-    title="运输付款上传"
-    detailsTitle="付款详情"
-    backRouteName="DashboardHome"
-    uploadRouteName="/dashboard/finance/transport-payment/upload"
-    manageRouteName="/dashboard/finance/transport-payment/manage"
-    :detailFields="detailFields"
-    :onSubmit="handleSubmit"
-    :onAIRecognize="handleAIRecognize"
-  />
+  <div class="contract-upload">
+    <DocumentUploadTemplate
+      title="运输付款上传"
+      backRouteName="DashboardHome"
+      uploadRouteName="/dashboard/finance/transport-payment/upload"
+      manageRouteName="/dashboard/finance/transport-payment/manage"
+      :onSubmit="handleFileUpload"
+      @upload-success="handleUploadSuccess"
+      @cancel-upload="handleCancelUpload"
+      ref="templateRef"
+    >
+      <!-- 详情信息表单 -->
+      <form @submit.prevent="handleDetailSubmit" class="form">
+        <!-- 基本信息 -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">转账记录编号</label>
+            <input 
+              v-model="detailForm.paymentNo" 
+              type="text" 
+              placeholder="请输入转账记录编号"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">付款方式</label>
+            <select 
+              v-model="detailForm.paymentMethod" 
+              class="form-input"
+            >
+              <option value="">请选择付款方式</option>
+              <option value="bank">银行转账</option>
+              <option value="cash">现金</option>
+              <option value="check">支票</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">付款人姓名</label>
+            <input 
+              v-model="detailForm.payerName" 
+              type="text" 
+              placeholder="请输入付款人姓名"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">付款人联系方式</label>
+            <input 
+              v-model="detailForm.payerContact" 
+              type="text" 
+              placeholder="请输入付款人联系方式"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">收款人姓名</label>
+            <input 
+              v-model="detailForm.payeeName" 
+              type="text" 
+              placeholder="请输入收款人姓名"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">收款人联系方式</label>
+            <input 
+              v-model="detailForm.payeeContact" 
+              type="text" 
+              placeholder="请输入收款人联系方式"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">付款金额(元)</label>
+            <input 
+              v-model="detailForm.amount" 
+              type="number" 
+              step="0.01"
+              placeholder="请输入付款金额"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">备注</label>
+            <textarea 
+              v-model="detailForm.remark" 
+              placeholder="请输入备注信息"
+              class="form-input"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="form-actions">
+          <button type="button" class="action-btn secondary" @click="handleAIAutoFill">
+            <SparklesIcon class="btn-icon" />
+            AI自动识别
+          </button>
+          <button type="submit" class="action-btn primary">
+            提交详情信息
+          </button>
+        </div>
+      </form>
+    </DocumentUploadTemplate>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { SparklesIcon } from 'lucide-vue-next';
 import DocumentUploadTemplate from '@/components/templates/DocumentUploadTemplate.vue';
+import '@/assets/styles/form.css';
 
-const router = useRouter();
+interface DetailForm {
+  paymentNo: string;
+  paymentMethod: string;
+  payerName: string;
+  payerContact: string;
+  payeeName: string;
+  payeeContact: string;
+  amount: number;
+  remark: string;
+}
 
-// 定义表单字段
-const detailFields = [
-  {
-    key: 'paymentNo',
-    label: '付款单号',
-    type: 'text',
-    placeholder: '请输入付款单号'
-  },
-  {
-    key: 'transporter',
-    label: '运输商',
-    type: 'text',
-    placeholder: '请输入运输商'
-  },
-  {
-    key: 'contractNo',
-    label: '合同编号',
-    type: 'text',
-    placeholder: '请输入合同编号'
-  },
-  {
-    key: 'amount',
-    label: '付款金额',
-    type: 'number',
-    placeholder: '请输入付款金额'
-  },
-  {
-    key: 'paymentDate',
-    label: '付款日期',
-    type: 'date'
-  },
-  {
-    key: 'paymentMethod',
-    label: '付款方式',
-    type: 'select',
-    options: [
-      { value: '银行转账', label: '银行转账' },
-      { value: '现金', label: '现金' },
-      { value: '支票', label: '支票' },
-      { value: '其他', label: '其他' }
-    ]
-  },
-  {
-    key: 'remark',
-    label: '备注',
-    type: 'textarea',
-    placeholder: '请输入备注信息',
-    rows: 3
+// 表单数据
+const detailForm = ref<DetailForm>({
+  paymentNo: '',
+  paymentMethod: '',
+  payerName: '',
+  payerContact: '',
+  payeeName: '',
+  payeeContact: '',
+  amount: 0,
+  remark: ''
+});
+
+// 处理文件上传
+const handleFileUpload = async (formData: {name: string, file: File}) => {
+  const uploadData = new FormData();
+  uploadData.append('name', formData.name);
+  uploadData.append('file', formData.file);
+  uploadData.append('fileType', 'transport_payment');
+
+  try {
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = { 
+      success: true, 
+      fileId: 'mock_file_' + Date.now(),
+      data: {
+        name: formData.name,
+        fileType: 'transport_payment'
+      }
+    };
+    return result;
+  } catch (error) {
+    throw error;
   }
-];
+}
 
-// AI自动识别文档
-const handleAIRecognize = async (file) => {
-  // 模拟AI识别过程
-  console.log('正在识别文档...', file.name);
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟识别结果
-      const result = {
-        paymentNo: 'TP-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        transporter: '自动识别运输商',
-        contractNo: 'TC-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-        amount: Math.floor(Math.random() * 100000).toString(),
-        paymentDate: new Date().toISOString().split('T')[0],
-        paymentMethod: '银行转账',
-        remark: '系统自动识别'
-      };
-      
-      alert('文档识别完成');
-      resolve(result);
-    }, 1500);
-  });
-};
+// 处理上传成功
+const handleUploadSuccess = (result: any) => {
+  if (result.success && result.fileId) {
+    // 文件上传成功后，模板组件会自动切换到下一步
+  }
+}
 
-// 提交上传
-const handleSubmit = async (formData) => {
-  // 这里可以调用API上传文件和数据
-  console.log('提交上传', formData);
-  
-  // 模拟上传成功
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      alert('上传成功');
-      // 上传成功后跳转到管理页面
-      router.push('/finance/transport-payment/manage');
-      resolve(true);
-    }, 500);
-  });
+// 处理取消上传
+const handleCancelUpload = async () => {
+  // TODO: 调用删除接口
+  console.log('取消上传');
+}
+
+// AI自动识别
+const handleAIAutoFill = async () => {
+  try {
+    // TODO: 调用AI识别接口
+    console.log('开始AI自动识别...');
+  } catch (error) {
+    console.error('AI识别失败：', error);
+  }
+}
+
+// 提交详情信息
+const handleDetailSubmit = async () => {
+  try {
+    // TODO: 调用API保存详情信息
+    console.log('提交详情信息：', detailForm.value);
+  } catch (error) {
+    console.error('提交详情信息失败：', error);
+  }
 };
 </script>
 
