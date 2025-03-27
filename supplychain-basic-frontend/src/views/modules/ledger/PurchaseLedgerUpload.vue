@@ -1094,6 +1094,7 @@ const prevStep = () => {
 };
 
 // 提交
+// 实际使用时需要调用 ledgerApi.createLedger(ledgerData, tenantType) 创建采购台账
 const handleSubmit = async () => {
   try {
     // TODO: 调用API保存台账信息
@@ -1213,7 +1214,7 @@ const totalPages = computed(() => {
 
 // 排序方法
 const sortBy = (type: string, key: string) => {
-  const config = sortConfig.value[type];
+  const config = sortConfig.value[type as keyof typeof sortConfig.value];
   if (config.key === key) {
     config.direction = config.direction === 'asc' ? 'desc' : 'asc';
   } else {
@@ -1223,7 +1224,7 @@ const sortBy = (type: string, key: string) => {
 };
 
 const getSortIcon = (type: string, key: string) => {
-  const config = sortConfig.value[type];
+  const config = sortConfig.value[type as keyof typeof sortConfig.value];
   if (config.key !== key) return '↕';
   return config.direction === 'asc' ? '↑' : '↓';
 };
